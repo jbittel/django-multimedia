@@ -1,0 +1,6 @@
+The following Multimedia item has finished encoding and uploading.  It is now ready for use on the site.
+
+Title: {{ media.title }}
+Filename: {{ media.file }}
+
+Thanks,
