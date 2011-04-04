@@ -43,7 +43,7 @@ The following is the default profile for Video.
 
 Here is a breakdown of the ffmpeg arguments being used in these examples.
 ::
-ffmpeg 
+    ffmpeg 
     -y // Answer YES to all prompts
     -i "%(input)s" // Input file path put in automatically by the system, leave this alone
     -f mp4 // Video container
@@ -58,7 +58,7 @@ ffmpeg
     -r 30 // Framerate
     "%(output)s" // Output file path put in automatically by the system, leave this alone
 
-ffmpeg 
+    ffmpeg 
     -y // Answer YES to all prompts
     -itsoffset -%(offset)s // Frame offset, how far into the video to grab a screenshot
     -i "%(input)s" // Input file path put in automatically by the system, leave this alone
