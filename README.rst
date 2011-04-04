@@ -41,6 +41,34 @@ The following is the default profile for Video.
         },
     }
 
+Here is a breakdown of the ffmpeg arguments being used in these examples.
+::
+ffmpeg 
+    -y // Answer YES to all prompts
+    -i "%(input)s" // Input file path put in automatically by the system, leave this alone
+    -f mp4 // Video container
+    -acodec libfaac // Audio codec
+    -ac 2 // Audio channels 
+    -ab 128k // Audio bitrate
+    -vcodec libx264 // Video codec
+    -vpre slow // Preset for video encoding quality (slow, fast, medium, etc)
+    -b 690k // Video bitrate
+    -crf 22 // Constant Rate Factor, no clue what this does
+    -s 620x350 // File dimensions
+    -r 30 // Framerate
+    "%(output)s" // Output file path put in automatically by the system, leave this alone
+
+ffmpeg 
+    -y // Answer YES to all prompts
+    -itsoffset -%(offset)s // Frame offset, how far into the video to grab a screenshot
+    -i "%(input)s" // Input file path put in automatically by the system, leave this alone
+    -vcodec mjpeg // Video (image) codec
+    -vframes 1 // We only want a single frame
+    -an // No clue what this does
+    -f rawvideo // Output image format
+    -s 620x350 // File dimensions
+    "%(output)s" // Output file path put in automatically by the system, leave this alone
+
 And here is the default profile for Audio:
 ::
     MULTIMEDIA_AUDIO_PROFILES = {
