@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 
 version = __import__('multimedia').__version__
@@ -20,7 +20,7 @@ setup(
     description = "",
     author = "Andrew Schoen",
     author_email = 'andrew.schoen@gmail.com',
-    packages=['multimedia'],
+    packages=find_packages(),
     install_requires = install_requires,
     include_package_data=True,
     zip_safe=False,
@@ -36,5 +36,8 @@ setup(
         'Topic :: Multimedia :: Video',
         'Topic :: Multimedia :: Sound/Audio',
         'Topic :: Multimedia :: Video :: Conversion',
-    ]
+    ],
+    package_dir={
+        'multimedia': 'multimedia',
+    },
 )

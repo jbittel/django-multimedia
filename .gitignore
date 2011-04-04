@@ -6,3 +6,6 @@
 *.txt~
 .DS_Store
 pip-log.txt
+build
+dist
+*.egg-info
