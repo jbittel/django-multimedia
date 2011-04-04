@@ -27,7 +27,9 @@ Please refer to the documentation for each dependency on instructions on how to 
 Configuration
 ==============
 
-You'll need to configure your media profiles and tell the app where to upload the encoded file to after completion.  You can use any ffmpeg command as long as you have the codecs needed installed.  Use the settings ''MULTIMEDIA_VIDEO_PROFILES'' and ''MULTIMEDIA_AUDIO_PROFILES''  to accomplish this.  The following are the default profiles.
+You'll need to configure your media profiles and tell the app where to upload the encoded file to after completion.  You can use any ffmpeg command as long as you have the codecs needed installed.  Use the settings ''MULTIMEDIA_VIDEO_PROFILES'' and ''MULTIMEDIA_AUDIO_PROFILES''  to accomplish this.  
+
+The following is the default profile for Video.
 ::
     MULTIMEDIA_VIDEO_PROFILES = {
         'f4v': {
@@ -39,6 +41,7 @@ You'll need to configure your media profiles and tell the app where to upload th
         },
     }
 
+And here is the default profile for Audio:
 ::
     MULTIMEDIA_AUDIO_PROFILES = {
         'audio': {
@@ -50,7 +53,6 @@ You'll need to configure your media profiles and tell the app where to upload th
     }
 
 The following settings are used to upload the media after encoding:
-
 ::
     MEDIA_SERVER_HOST = "some.host.here"
     MEDIA_SERVER_USER = "host_user"
@@ -64,10 +66,9 @@ The following settings are used to upload the media after encoding:
 Installing FFMPEG
 ===============
 On Mac OS X you should be able to install ffmpeg using homebrew:
-
 ::
     brew install ffmpeg
 
 You might need to brew install other codecs you want to use as well.
 
-On Ubuntu, here is a link to a helpful guide with instructions on how to install on different Ubuntu versions: <<http://ubuntuforums.org/showthread.php?t=786095>>
+On Ubuntu, here is a link to a helpful guide with instructions on how to install on different Ubuntu versions: http://ubuntuforums.org/showthread.php?t=786095
