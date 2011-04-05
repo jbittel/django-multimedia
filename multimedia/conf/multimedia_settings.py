@@ -13,7 +13,7 @@ MULTIMEDIA_NOTIFICATION_EMAIL = getattr(settings, "MULTIMEDIA_NOTIFICATION_EMAIL
 
 DEFAULT_VIDEO_PROFILES = {
     'f4v': {
-        'encode_cmd': 'ffmpeg -y -i "%(input)s" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -vpre slow -b 690k -ac 2 -crf 22 -s 620x350 -r 30 "%(output)s"',
+        'encode_cmd': 'ffmpeg -y -i "%(input)s" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -vpre slow -b 690k -ac 1 -s 620x350 -r 30 "%(output)s"',
         'encode':True,
         'name':'Flash Video',
         'container':'f4v',
