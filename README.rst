@@ -14,26 +14,42 @@ Dependancies
 Getting Started
 =============
 
-To get started simply install using ''pip'':
+To get started simply install using ``pip``:
 ::
     pip install django-multimedia
 
-Add ''multimedia'' to your installed apps and ''syncdb''.  If you are using ''south'' you might want to ''syncdb --all'' and ''migrate --fake''
+Add ``multimedia`` to your installed apps and ``syncdb``.  If you are using ``south`` you might want to ``syncdb --all`` and ``migrate --fake``
 
-Next, you'll need to configure you settings. See ''configuration'' below.
+Your installed apps should look something like this:
+::
+	INSTALLED_APPS = (
+	    'django.contrib.auth',
+	    'django.contrib.contenttypes',
+	    'django.contrib.sessions',
+	    'django.contrib.sites',
+	    'django.contrib.messages',
+	    'django.contrib.admin',
+	    'djcelery',
+	    'filer',
+	    'multimedia',
+	    'appmedia',
+	    'easy_thumbnails',
+	)
+
+Next, you'll need to configure your settings. See **configuration** below.
 
 Please refer to the documentation for each dependency on instructions on how to install them.
 
 Configuration
 ==============
 
-You'll need to configure your media profiles and tell the app where to upload the encoded file to after completion.  You can use any ffmpeg command as long as you have the codecs needed installed.  Use the settings ''MULTIMEDIA_VIDEO_PROFILES'' and ''MULTIMEDIA_AUDIO_PROFILES''  to accomplish this.  
+You'll need to configure your media profiles and tell the app where to upload the encoded file to after completion.  You can use any ``ffmpeg`` command as long as you have the codecs needed installed.  Use the settings ''MULTIMEDIA_VIDEO_PROFILES'' and ''MULTIMEDIA_AUDIO_PROFILES''  to accomplish this.  
 
 The following is the default profile for Video.
 ::
     MULTIMEDIA_VIDEO_PROFILES = {
         'f4v': {
-            'encode_cmd': 'ffmpeg -y -i "%(input)s" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -vpre slow -b 690k -ac 2 -crf 22 -s 620x350 -r 30 "%(output)s"',
+            'encode_cmd': 'ffmpeg -y -i "%(input)s" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -vpre slow -b 690k -ac 1 -s 620x350 -r 30 "%(output)s"',
             'encode':True,
             'name':'Flash Video',
             'container':'f4v',
@@ -41,7 +57,7 @@ The following is the default profile for Video.
         },
     }
 
-Here is a breakdown of the ffmpeg arguments being used in these examples.
+Here is a breakdown of the ``ffmpeg`` arguments being used in these examples.
 ::
     Video: 
     ffmpeg 
@@ -49,12 +65,11 @@ Here is a breakdown of the ffmpeg arguments being used in these examples.
     -i "%(input)s" // Input file path put in automatically by the system, leave this alone
     -f mp4 // Video container
     -acodec libfaac // Audio codec
-    -ac 2 // Audio channels 
+    -ac 1 // Audio channels 
     -ab 128k // Audio bitrate
     -vcodec libx264 // Video codec
     -vpre slow // Preset for video encoding quality (slow, fast, medium, etc)
     -b 690k // Video bitrate
-    -crf 22 // Constant Rate Factor, no clue what this does
     -s 620x350 // File dimensions
     -r 30 // Framerate
     "%(output)s" // Output file path put in automatically by the system, leave this alone
@@ -62,7 +77,7 @@ Here is a breakdown of the ffmpeg arguments being used in these examples.
     Screenshot: 
     ffmpeg 
     -y // Answer YES to all prompts
-    -itsoffset -%(offset)s // Frame offset, how far into the video to grab a screenshot
+    -itsoffset -%(offset)s // Frame offset, how far into the video to grab a screenshot, leave this alone
     -i "%(input)s" // Input file path put in automatically by the system, leave this alone
     -vcodec mjpeg // Video (image) codec
     -vframes 1 // We only want a single frame
@@ -95,10 +110,10 @@ The following settings are used to upload the media after encoding:
    
 Installing FFMPEG
 ===============
-On Mac OS X you should be able to install ffmpeg using homebrew:
+On Mac OS X you should be able to install ``ffmpeg`` using ``homebrew``:
 ::
     brew install ffmpeg
 
-You might need to brew install other codecs you want to use as well.
+You might need to ``brew`` install other codecs you want to use as well.
 
 On Ubuntu, here is a link to a helpful guide with instructions on how to install on different Ubuntu versions: http://ubuntuforums.org/showthread.php?t=786095
