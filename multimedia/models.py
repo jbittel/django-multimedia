@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 import paramiko
 import shlex
@@ -10,6 +12,7 @@ from django.contrib.auth.models import User
 from filer.fields.image import FilerImageField
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
+from django.utils.encoding import python_2_unicode_compatible
 
 from celery.task.sets import subtask
 
@@ -34,9 +37,10 @@ class MediaManager(models.Manager):
 
 
 def get_media_upload_to(instance, filename):
-        return u'multimedia/%s/%s/%s' % (instance.file_type, instance.slug, filename)
+        return 'multimedia/%s/%s/%s' % (instance.file_type, instance.slug, filename)
 
 
+@python_2_unicode_compatible
 class MediaBase(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255)
@@ -50,7 +54,16 @@ class MediaBase(models.Model):
     profile = models.CharField(max_length=255)
     encoded = models.BooleanField(default=False, editable=False, help_text="Indicates that this file has finished encoding")
     encoding = models.BooleanField(default=False, editable=False, help_text="Indicates that this file is currently encoding")
+
     objects = MediaManager()
+
+    class Meta:
+        ordering = ('-date_added',)
+        verbose_name = "Media File"
+        verbose_name_plural = "Media Files"
+
+    def __str__(self):
+        return self.title
 
     def get_profile(self):
         return None
@@ -117,14 +130,6 @@ class MediaBase(models.Model):
             self.encoding = True
         super(MediaBase, self).save(*args, **kwargs)
 
-    class Meta:
-        ordering = ('-date_added',)
-        verbose_name = "Media File"
-        verbose_name_plural = "Media Files"
-
-    def __unicode__(self):
-        return u'%s' % self.title
-
 
 def check_file_changed(sender, **kwargs):
     instance = kwargs['instance']
@@ -144,7 +149,12 @@ class Video(MediaBase):
     auto_thumbnail = models.BooleanField(default=False, help_text="Will auto generate the thumbnail from the video file if checked")
     thumbnail_offset = models.PositiveIntegerField(blank=True, default=4, help_text="Number of seconds into the video to take the auto thumbnail")
     generated_thumbnail = models.FileField(upload_to=get_media_upload_to, null=True, blank=True, storage=OverwritingStorage())
+
     objects = MediaManager()
+
+    class Meta:
+        verbose_name = "Video File"
+        verbose_name_plural = "Video Files"
 
     def get_video_url(self):
         return "rtmp://%s/%s/mp4:%s.%s" % (multimedia_settings.MEDIA_SERVER_HOST, multimedia_settings.MEDIA_SERVER_VIDEO_BUCKET, self.id, self.container)
@@ -197,14 +207,14 @@ class Video(MediaBase):
         if self.auto_thumbnail and make_thumbnail:
             generate_thumbnail.delay(self.id)
 
-    class Meta:
-        verbose_name = "Video File"
-        verbose_name_plural = "Video Files"
-
 pre_save.connect(check_file_changed, sender=Video)
 
 
 class Audio(MediaBase):
+    class Meta:
+        verbose_name = "Audio File"
+        verbose_name_plural = "Audio Files"
+
     def get_profile(self):
         return multimedia_settings.MULTIMEDIA_AUDIO_PROFILES[self.profile]
 
@@ -218,9 +228,5 @@ class Audio(MediaBase):
         super(Audio, self).save(*args, **kwargs)
         if self.encode and (not self.encoded):
             encode_media.delay(self.id, callback=subtask(upload_media))
-
-    class Meta:
-        verbose_name = "Audio File"
-        verbose_name_plural = "Audio Files"
 
 pre_save.connect(check_file_changed, sender=Audio)
