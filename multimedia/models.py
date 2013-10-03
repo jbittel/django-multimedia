@@ -8,11 +8,15 @@ import subprocess
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save
-from django.contrib.auth.models import User
 from filer.fields.image import FilerImageField
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.utils.encoding import python_2_unicode_compatible
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+except ImportError:  # Django version < 1.5
+    from django.contrib.auth.models import User
 
 from celery.task.sets import subtask
 
