@@ -70,7 +70,7 @@ class MediaBase(models.Model):
         return self.title
 
     def get_profile(self):
-        return None
+        raise NotImplementedError('subclasses of MediaBase must provide a get_profile() method')
 
     @property
     def container(self):
@@ -106,7 +106,7 @@ class MediaBase(models.Model):
         return self.video if self.file_type == "video" else self.audio
 
     def get_remote_path(self):
-        return None
+        raise NotImplementedError('subclasses of MediaBase must provide a get_remote_path() method')
 
     def notify_user(self):
         from_email = multimedia_settings.MULTIMEDIA_NOTIFICATION_EMAIL
