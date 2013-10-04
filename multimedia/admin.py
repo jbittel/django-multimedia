@@ -21,22 +21,19 @@ class MediaAdmin(admin.ModelAdmin):
             messages.success(request, "Your file is being encoded and uploaded.  An email notification will be sent when complete.")
 
     def encode_again(self, request, queryset):
-        rows_updated = 0
         for media in queryset:
             if media.encode:
-                rows_updated += 1
                 encode_media.delay(media.id, callback=subtask(upload_media))
                 media.encoded = False
                 media.uploaded = False
                 media.encoding = True
                 media.save()
-        if rows_updated == 1:
+        if len(queryset) == 1:
             message_bit = "Your file is"
-        elif rows_updated > 1:
+        else:
             message_bit = "Your files are"
 
-        if rows_updated > 0:
-            messages.success(request, "%s being encoded and uploaded.  An email notification will be sent when complete." % message_bit)
+        messages.success(request, "%s being encoded and uploaded.  An email notification will be sent when complete." % message_bit)
 
     encode_again.short_description = "Re-encode and upload media"
     actions = [encode_again]
