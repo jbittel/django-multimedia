@@ -173,7 +173,7 @@ class Video(MediaBase):
         return multimedia_settings.MULTIMEDIA_VIDEO_PROFILES[self.profile]
 
     def get_remote_path(self):
-        return os.path.join(settings.MEDIA_SERVER_VIDEO_PATH, "%s.%s" % (self.id, self.container))
+        return os.path.join(multimedia_settings.MEDIA_SERVER_VIDEO_PATH, "%s.%s" % (self.id, self.container))
 
     def get_thumb_output_path(self):
         return "multimedia/%s/%s/%s.jpg" % (self.file_type, self.slug, self.id)
