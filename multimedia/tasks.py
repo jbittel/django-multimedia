@@ -22,8 +22,7 @@ def generate_thumbnail(video_id):
 
 @task(max_retries=3)
 def encode_media(media_id, callback=None):
-    base = MediaBase.objects.get(pk=media_id)
-    media = base.get_media()
+    media = MediaBase.objects.get_media(media_id)
     logger.info("Encoding %s" % media)
     try:
         media.encode_file()
@@ -38,8 +37,7 @@ def encode_media(media_id, callback=None):
 
 @task(max_retries=3)
 def upload_media(media_id):
-    base = MediaBase.objects.get(pk=media_id)
-    media = base.get_media()
+    media = MediaBase.objects.get_media(media_id)
     logger.info("Uploading encoded file for %s" % media)
     try:
         media.upload_file()

@@ -39,6 +39,13 @@ class MediaManager(models.Manager):
     def active(self):
         return self.filter(uploaded=True, encoded=True)
 
+    def get_media(self, media_id):
+        """
+        Given an id, return the child media type object.
+        """
+        base = MediaBase.objects.get(pk=media_id)
+        return base.get_media()
+
 
 def get_media_upload_to(instance, filename):
         return 'multimedia/%s/%s/%s' % (instance.file_type, instance.slug, filename)
