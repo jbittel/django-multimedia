@@ -9,17 +9,15 @@ logger = get_task_logger(__name__)
 
 
 @task(max_retries=3)
-def generate_thumbnail(video_id, callback=None):
+def generate_thumbnail(video_id):
     media = Video.objects.get(pk=video_id)
     logger.info("Generating thumbnail for %s" % media)
     try:
         media.make_thumbnail()
-    except Exception, exc:
+    except Exception as exc:
         logger.info("Generate thumbnail failed for %s - retrying " % media)
         raise generate_thumbnail.retry(exc=exc, countdown=60)
     logger.info("Done generating thumbnail for %s" % media)
-    if callback:
-        subtask(callback).delay(media.id)
 
 
 @task(max_retries=3)
