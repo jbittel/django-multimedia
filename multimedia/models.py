@@ -10,7 +10,6 @@ from django.db import models
 from django.db.models.signals import pre_save
 from filer.fields.image import FilerImageField
 from django.template.loader import render_to_string
-from django.core.mail import send_mail
 from django.utils.encoding import python_2_unicode_compatible
 try:
     from django.contrib.auth import get_user_model
@@ -165,9 +164,6 @@ class Video(MediaBase):
     class Meta:
         verbose_name = "Video File"
         verbose_name_plural = "Video Files"
-
-    def get_video_url(self):
-        return "rtmp://%s/%s/mp4:%s.%s" % (multimedia_settings.MEDIA_SERVER_HOST, multimedia_settings.MEDIA_SERVER_VIDEO_BUCKET, self.id, self.container)
 
     def get_screenshot(self):
         if self.thumbnail_image:
