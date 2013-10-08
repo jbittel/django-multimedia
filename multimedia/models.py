@@ -119,7 +119,7 @@ class MediaBase(models.Model):
         from_email = multimedia_settings.MULTIMEDIA_NOTIFICATION_EMAIL
         subject = "Multimedia Uploaded (%s)" % self.title
         message = render_to_string("multimedia/email_notification.txt", {"media": self})
-        self.user.email_user(subject, message, from_email=from_email, fail_silently=True)
+        self.user.email_user(subject, message, from_email=from_email)
 
     def upload_file(self):
         local_file_path = self.output_path
