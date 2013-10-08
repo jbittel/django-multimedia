@@ -83,10 +83,6 @@ class MediaBase(models.Model):
         return self.get_profile().get("container", "media")
 
     @property
-    def encode(self):
-        return self.get_profile().get("encode", False)
-
-    @property
     def encode_cmd(self):
         encode_cmd = self.get_profile().get("encode_cmd")
         input_path = os.path.join(settings.MEDIA_ROOT, self.file.name)
@@ -95,11 +91,7 @@ class MediaBase(models.Model):
 
     @property
     def output_path(self):
-        encode = self.get_profile().get("encode", False)
-        if encode:
-            return os.path.join(settings.MEDIA_ROOT, "multimedia/%s/%s/%s.%s" % (self.file_type, self.slug, self.id, self.container))
-        else:
-            return os.path.join(settings.MEDIA_ROOT, self.file.name)
+        return os.path.join(settings.MEDIA_ROOT, "multimedia/%s/%s/%s.%s" % (self.file_type, self.slug, self.id, self.container))
 
     def encode_file(self):
         command = shlex.split(self.encode_cmd)
@@ -135,7 +127,7 @@ class MediaBase(models.Model):
         self.notify_user()
 
     def save(self, *args, **kwargs):
-        if not self.id and self.encode:
+        if not self.id:
             self.encoding = True
         super(MediaBase, self).save(*args, **kwargs)
 
@@ -207,8 +199,7 @@ class Video(MediaBase):
         if not self.id:
             self.file_type = "video"
         super(Video, self).save(*args, **kwargs)
-        if self.encode and (not self.encoded):
-            #encode then upload
+        if not self.encoded:
             encode_media.delay(self.id, callback=subtask(upload_media))
         if self.auto_thumbnail and make_thumbnail:
             generate_thumbnail.delay(self.id)
@@ -232,7 +223,7 @@ class Audio(MediaBase):
         if not self.id:
             self.file_type = "audio"
         super(Audio, self).save(*args, **kwargs)
-        if self.encode and (not self.encoded):
+        if not self.encoded:
             encode_media.delay(self.id, callback=subtask(upload_media))
 
 pre_save.connect(check_file_changed, sender=Audio)

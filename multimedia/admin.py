@@ -17,17 +17,16 @@ class MediaAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.user = request.user
         obj.save()
-        if obj.encode and (not obj.encoded):
+        if not obj.encoded:
             messages.success(request, "Your file is being encoded and uploaded.  An email notification will be sent when complete.")
 
     def encode_again(self, request, queryset):
         for media in queryset:
-            if media.encode:
-                encode_media.delay(media.id, callback=subtask(upload_media))
-                media.encoded = False
-                media.uploaded = False
-                media.encoding = True
-                media.save()
+            encode_media.delay(media.id, callback=subtask(upload_media))
+            media.encoded = False
+            media.uploaded = False
+            media.encoding = True
+            media.save()
         if len(queryset) == 1:
             message_bit = "Your file is"
         else:

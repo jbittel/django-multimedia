@@ -12,7 +12,6 @@ MULTIMEDIA_NOTIFICATION_EMAIL = getattr(settings, "MULTIMEDIA_NOTIFICATION_EMAIL
 DEFAULT_VIDEO_PROFILES = {
     'f4v': {
         'encode_cmd': 'ffmpeg -y -i "%(input)s" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -b:v 690k -ac 1 -s 620x350 -r 30 "%(output)s"',
-        'encode': True,
         'name': 'Flash Video',
         'container': 'f4v',
         'thumbnail_cmd': 'ffmpeg -y -itsoffset -%(offset)s -i "%(input)s" -vcodec mjpeg -vframes 1 -an -f rawvideo -s 620x350 "%(output)s"'
@@ -24,7 +23,6 @@ MULTIMEDIA_VIDEO_PROFILES = getattr(settings, "MULTIMEDIA_VIDEO_PROFILES", DEFAU
 DEFAULT_AUDIO_PROFILES = {
     'audio': {
         'encode_cmd': 'ffmpeg -y -i "%(input)s" "%(output)s"',
-        'encode': True,
         'name': 'MP3 Audio',
         'container': 'mp3',
     },
