@@ -2,9 +2,6 @@ from django.contrib import admin, messages
 from models import Video, Audio
 from forms import VideoAdminForm, AudioAdminForm
 
-from celery.task.sets import subtask
-from tasks import encode_media, upload_media
-
 
 class MediaAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'profile', 'encoding', 'encoded', 'uploaded', 'date_added', 'date_modified')
@@ -23,7 +20,6 @@ class MediaAdmin(admin.ModelAdmin):
 
     def encode_again(self, request, queryset):
         for media in queryset:
-            encode_media.delay(media.id, callback=subtask(upload_media))
             media.encoded = False
             media.uploaded = False
             media.encoding = True
