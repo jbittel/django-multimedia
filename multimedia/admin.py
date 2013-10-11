@@ -15,7 +15,8 @@ class MediaAdmin(admin.ModelAdmin):
     list_filter = ('encoded', 'uploaded', 'encoding',)
 
     def save_model(self, request, obj, form, change):
-        obj.user = request.user
+        if not change:
+            obj.user = request.user
         obj.save()
         if not obj.encoded:
             messages.success(request, "Your file is being encoded and uploaded.  An email notification will be sent when complete.")
