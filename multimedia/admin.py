@@ -4,16 +4,13 @@ from forms import VideoAdminForm, AudioAdminForm
 
 
 class MediaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'profile', 'encoding', 'encoded', 'uploaded', 'date_added', 'date_modified')
-    list_display_links = ('id', 'title',)
+    list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified')
     prepopulated_fields = {'slug': ('title',)}
-    exclude = ('user', 'file_type',)
-    readonly_fields = ('encoded', 'uploaded',)
     list_filter = ('encoded', 'uploaded', 'encoding',)
 
     def save_model(self, request, obj, form, change):
         if not change:
-            obj.user = request.user
+            obj.owner = request.user
         obj.save()
         if not obj.encoded:
             messages.success(request, "Your file is being encoded and uploaded.  An email notification will be sent when complete.")
@@ -21,8 +18,6 @@ class MediaAdmin(admin.ModelAdmin):
     def encode_again(self, request, queryset):
         for media in queryset:
             media.encoded = False
-            media.uploaded = False
-            media.encoding = True
             media.save()
         if len(queryset) == 1:
             message_bit = "Your file is"
@@ -37,8 +32,7 @@ class MediaAdmin(admin.ModelAdmin):
 
 class VideoAdmin(MediaAdmin):
     form = VideoAdminForm
-    readonly_fields = ('encoded', 'uploaded', 'generated_thumbnail',)
-    list_display = ('id', 'title', 'profile', 'encoding', 'encoded', 'uploaded', 'date_added', 'date_modified', 'admin_thumbnail',)
+    list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified', 'admin_thumbnail',)
 
     class Meta:
         model = Video
