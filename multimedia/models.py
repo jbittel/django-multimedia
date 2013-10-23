@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from filecmp import cmp
 import os
 import paramiko
 import shlex
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
@@ -25,18 +27,16 @@ from .storage import OverwritingStorage
 from .conf import multimedia_settings
 
 
-def check_file_changed(sender, **kwargs):
-    instance = kwargs['instance']
+@receiver(pre_save)
+def check_file_changed(sender, instance, **kwargs):
     if instance.id and hasattr(instance.file.file, "temporary_file_path"):
-        old_instance = sender.objects.get(id=instance.id)
-        compare_cmd = 'cmp "%s" "%s"' % (os.path.join(settings.MEDIA_ROOT, old_instance.file.name),
-                                         os.path.join(settings.MEDIA_ROOT, instance.file.file.temporary_file_path()))
-        changed = subprocess.Popen(compare_cmd, stdout=subprocess.PIPE, shell=True).communicate()[0]
-        if changed:
+        current = sender.objects.get(pk=instance.id)
+        if not cmp(os.path.join(settings.MEDIA_ROOT, current.file.name),
+                   os.path.join(settings.MEDIA_ROOT, instance.file.file.temporary_file_path())):
             instance.uploaded = False
             instance.encoded = False
             instance.encoding = True
-            old_instance.file.delete(save=False)
+        current.file.delete(save=False)
 
 
 def local_path(instance, filename, absolute=False):
@@ -177,8 +177,6 @@ class Video(MediaBase):
         if not self.encoded:
             encode_upload_video(self.id)
 
-pre_save.connect(check_file_changed, sender=Video)
-
 
 class Audio(MediaBase):
     class Meta:
@@ -199,5 +197,3 @@ class Audio(MediaBase):
         cmd = multimedia_settings.MULTIMEDIA_AUDIO_PROFILES[profile].get("encode")
         args = {"input": self.file.path, "output": self.output_path(profile)}
         return cmd % args
-
-pre_save.connect(check_file_changed, sender=Audio)
