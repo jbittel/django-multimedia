@@ -118,8 +118,9 @@ class MediaBase(models.Model):
 
 
 class Video(MediaBase):
-    auto_thumbnail = models.FileField(upload_to=local_path, null=True, blank=True,
-                                      editable=False, storage=OverwritingStorage())
+    auto_thumbnail = models.FileField(upload_to=local_path,
+                                      null=True, blank=True, editable=False,
+                                      storage=OverwritingStorage())
     auto_thumbnail_offset = models.PositiveIntegerField(blank=True, default=4,
                                                         help_text="Offset for automatic thumbnail, in seconds")
     custom_thumbnail = FilerImageField(blank=True, null=True,
