@@ -78,6 +78,9 @@ class MediaBase(models.Model):
         if not self.id:
             self.created = now()
         self.modified = now()
+        if not self.encoded:
+            self.encoding = True
+            self.uploaded = False
         super(MediaBase, self).save(*args, **kwargs)
 
     def output_path(self, profile):
@@ -170,9 +173,6 @@ class Video(MediaBase):
 
     def save(self, *args, **kwargs):
         from .tasks import encode_upload_video
-        if not self.encoded:
-            self.encoding = True
-            self.uploaded = False
         super(Video, self).save(*args, **kwargs)
         if not self.encoded:
             encode_upload_video(self.id)
@@ -184,10 +184,10 @@ class Audio(MediaBase):
         verbose_name_plural = "Audio Files"
 
     def save(self, *args, **kwargs):
-#        from tasks import encode_media, upload_media
+        from .tasks import encode_upload_audio
         super(Audio, self).save(*args, **kwargs)
-#        if not self.encoded:
-#            encode_media.delay(self.id, callback=subtask(upload_media))
+        if not self.encoded:
+            encode_upload_audio(self.id)
 
     def output_path(self, profile):
         container = multimedia_settings.MULTIMEDIA_AUDIO_PROFILES[profile].get('container')

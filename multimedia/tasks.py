@@ -22,6 +22,16 @@ def encode_upload_video(video_id):
     chord((group), notify_owner.si('video', video_id)).apply_async(countdown=10)
 
 
+def encode_upload_audio(audio_id):
+    """
+    """
+    group = []
+    for profile in multimedia_settings.MULTIMEDIA_AUDIO_PROFILES:
+        group.append(chain(encode_media.s(profile, 'audio', audio_id),
+                           upload_media.s('audio', audio_id)))
+    chord((group), notify_owner.si('audio', audio_id)).apply_async(countdown=10)
+
+
 @task(max_retries=3)
 def encode_media(profile, model, media_id):
     media_type = ContentType.objects.get(app_label='multimedia', model=model)

@@ -22,9 +22,8 @@ MULTIMEDIA_VIDEO_PROFILES = getattr(settings, "MULTIMEDIA_VIDEO_PROFILES", DEFAU
 MULTIMEDIA_THUMBNAIL_CMD = getattr(settings, 'MULTIMEDIA_THUMBNAIL_CMD', DEFAULT_THUMBNAIL_CMD)
 
 DEFAULT_AUDIO_PROFILES = {
-    'audio': {
-        'encode_cmd': 'ffmpeg -y -i "%(input)s" "%(output)s"',
-        'name': 'MP3 Audio',
+    'MP3 Audio': {
+        'encode': 'ffmpeg -y -i "%(input)s" "%(output)s"',
         'container': 'mp3',
     },
 }
