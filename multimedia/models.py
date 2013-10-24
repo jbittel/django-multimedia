@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-from filecmp import cmp
 import os
 import paramiko
 import shlex
@@ -9,8 +8,6 @@ import subprocess
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
@@ -21,22 +18,12 @@ try:
 except ImportError:  # Django version < 1.5
     from django.contrib.auth.models import User
 
+from celery import chord
+
 from filer.fields.image import FilerImageField
 
 from .storage import OverwritingStorage
 from .conf import multimedia_settings
-
-
-@receiver(pre_save)
-def check_file_changed(sender, instance, **kwargs):
-    if instance.id and hasattr(instance.file.file, "temporary_file_path"):
-        current = sender.objects.get(pk=instance.id)
-        if not cmp(os.path.join(settings.MEDIA_ROOT, current.file.name),
-                   os.path.join(settings.MEDIA_ROOT, instance.file.file.temporary_file_path())):
-            instance.uploaded = False
-            instance.encoded = False
-            instance.encoding = True
-        current.file.delete(save=False)
 
 
 def local_path(instance, filename, absolute=False):
@@ -45,6 +32,26 @@ def local_path(instance, filename, absolute=False):
         return os.path.join(settings.MEDIA_ROOT, relative_path)
     else:
         return relative_path
+
+
+@python_2_unicode_compatible
+class EncodeProfile(models.Model):
+    """
+    Encoding profiles associated with ``MediaBase`` subclasses. Each
+    media instance can have multiple encoding profiles associated
+    with it. When a media instance is encoded, it will be encoded
+    using all associated encoding profiles.
+    """
+    command = models.CharField(_('command'), max_length=1024)
+    container = models.CharField(_('container'), max_length=32)
+    name = models.CharField(_('name'), max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    def shell_command(self, input_path, output_path):
+        args = {'input': input_path, 'output': output_path}
+        return shlex.split(self.command % args)
 
 
 @python_2_unicode_compatible
@@ -57,6 +64,7 @@ class MediaBase(models.Model):
     created = models.DateTimeField(_('created'), editable=False)
     modified = models.DateTimeField(_('modified'), editable=False)
     owner = models.ForeignKey(User, verbose_name=_('owner'), editable=False)
+    profiles = models.ManyToManyField(EncodeProfile)
 
     file = models.FileField(_('file'), upload_to=local_path)
     encoding = models.BooleanField(_('encoding'), default=False, editable=False,
@@ -67,9 +75,8 @@ class MediaBase(models.Model):
                                    help_text="Indicates this file has been uploaded")
 
     class Meta:
+        abstract = True
         ordering = ('-created',)
-        verbose_name = "Media File"
-        verbose_name_plural = "Media Files"
 
     def __str__(self):
         return self.title
@@ -83,41 +90,42 @@ class MediaBase(models.Model):
             self.uploaded = False
         super(MediaBase, self).save(*args, **kwargs)
 
-    def output_path(self, profile):
-        raise NotImplementedError('subclasses of MediaBase must provide an output_path() method')
+    def encode(self):
+        """
+        Encode a ``MediaBase`` subclass using all associated
+        ``EncodeProfile``s using a group of Celery tasks.
+        """
+        from .tasks import encode_media, encode_media_complete
+        model = self.__class__.__name__.lower()
+        chord((encode_media.s(model, self.id, p.id) for p in self.profiles.all()),
+              encode_media_complete.si(model, self.id)).apply_async(countdown=5)
 
-    def encode_cmd(self, profile):
-        raise NotImplementedError('subclasses of MediaBase must provide an encode_cmd() method')
+    def container_path(self, profile):
+        return local_path(self, "%s.%s" % (self.id, profile.container), absolute=True)
 
-    def encode(self, profile):
-        cmd = shlex.split(self.encode_cmd(profile))
-        subprocess.check_call(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        self.encoded = True
-        self.encoding = False
-        self.save()
+    def encode_to_container(self, profile):
+        """
+        Encode a ``MediaBase`` subclass using the given profile
+        into the given profile's container.
+        """
+        subprocess.check_call(profile.shell_command(self.file.path,
+                                                    self.container_path(profile)),
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-    def get_remote_path(self, path):
-        filename = os.path.basename(path)
-        return os.path.join(multimedia_settings.MEDIA_SERVER_VIDEO_PATH, filename)
-
-    def notify_owner(self):
-        from_email = multimedia_settings.MULTIMEDIA_NOTIFICATION_EMAIL
-        subject = "Multimedia Uploaded (%s)" % self.title
-        message = render_to_string("multimedia/email_notification.txt", {"media": self})
-        self.owner.email_user(subject, message, from_email=from_email)
-
-    def upload_file(self, path):
-        remote_path = self.get_remote_path(path)
+    def upload_to_server(self, profile):
+        """
+        Upload an encoded file to a remote media server.
+        """
+        remote_path = os.path.join(multimedia_settings.MEDIA_SERVER_VIDEO_PATH,
+                                   "%s.%s" % (self.id, profile.container))
         transport = paramiko.Transport((multimedia_settings.MEDIA_SERVER_HOST,
                                         multimedia_settings.MEDIA_SERVER_PORT))
         transport.connect(username=multimedia_settings.MEDIA_SERVER_USER,
                           password=multimedia_settings.MEDIA_SERVER_PASSWORD)
         sftp = paramiko.SFTPClient.from_transport(transport)
-        sftp.put(path, remote_path)
+        sftp.put(self.container_path(profile), remote_path)
         sftp.close()
         transport.close()
-        self.uploaded = True
-        self.save()
 
 
 class Video(MediaBase):
@@ -133,14 +141,12 @@ class Video(MediaBase):
         verbose_name = "Video File"
         verbose_name_plural = "Video Files"
 
-    def output_path(self, profile):
-        container = multimedia_settings.MULTIMEDIA_VIDEO_PROFILES[profile].get('container')
-        return local_path(self, "%s.%s" % (self.id, container), absolute=True)
-
-    def encode_cmd(self, profile):
-        cmd = multimedia_settings.MULTIMEDIA_VIDEO_PROFILES[profile].get("encode")
-        args = {"input": self.file.path, "output": self.output_path(profile)}
-        return cmd % args
+    def save(self, *args, **kwargs):
+        from .tasks import generate_thumbnail
+        super(Video, self).save(*args, **kwargs)
+        if not self.auto_thumbnail:
+            model = self.__class__.__name__.lower()
+            generate_thumbnail.apply_async((model, self.id), countdown=5)
 
     @property
     def thumbnail(self):
@@ -154,28 +160,22 @@ class Video(MediaBase):
     admin_thumbnail.allow_tags = True
     admin_thumbnail.short_description = "Thumbnail"
 
-    @property
-    def thumbnail_cmd(self):
-        cmd = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
-        output_path = local_path(self, "%s.jpg" % self.id, absolute=True)
-        args = {"input": self.file.path, "offset": self.auto_thumbnail_offset, "output": output_path}
-        return cmd % args
-
-    def make_thumbnail(self):
-        cmd = shlex.split(self.thumbnail_cmd)
-        subprocess.check_call(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        f = open(local_path(self, "%s.jpg" % self.id, absolute=True))
-        self.auto_thumbnail.save("%s.jpg" % self.id,
-                                 SimpleUploadedFile("%s.jpg" % self.id, f.read(), content_type="image/jpg"),
+    def generate_thumbnail(self):
+        command = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
+        filename = "%s.jpg" % self.id
+        output_path = local_path(self, filename, absolute=True)
+        args = {'input': self.file.path,
+                'output': output_path,
+                'offset': self.auto_thumbnail_offset}
+        shell_command = shlex.split(command % args)
+        subprocess.check_call(shell_command,
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        f = open(output_path)
+        self.auto_thumbnail.save(filename,
+                                 SimpleUploadedFile(filename, f.read(), content_type="image/jpg"),
                                  save=False)
         self.save()
         f.close()
-
-    def save(self, *args, **kwargs):
-        from .tasks import encode_upload_video
-        super(Video, self).save(*args, **kwargs)
-        if not self.encoded:
-            encode_upload_video(self.id)
 
 
 class Audio(MediaBase):
@@ -183,17 +183,6 @@ class Audio(MediaBase):
         verbose_name = "Audio File"
         verbose_name_plural = "Audio Files"
 
-    def save(self, *args, **kwargs):
-        from .tasks import encode_upload_audio
-        super(Audio, self).save(*args, **kwargs)
-        if not self.encoded:
-            encode_upload_audio(self.id)
 
-    def output_path(self, profile):
-        container = multimedia_settings.MULTIMEDIA_AUDIO_PROFILES[profile].get('container')
-        return local_path(self, "%s.%s" % (self.id, container), absolute=True)
-
-    def encode_cmd(self, profile):
-        cmd = multimedia_settings.MULTIMEDIA_AUDIO_PROFILES[profile].get("encode")
-        args = {"input": self.file.path, "output": self.output_path(profile)}
-        return cmd % args
+from .signals import check_file_changed
+from .signals import encode

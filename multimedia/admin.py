@@ -1,6 +1,9 @@
 from django.contrib import admin, messages
-from models import Video, Audio
 from forms import VideoAdminForm, AudioAdminForm
+
+from .models import Audio
+from .models import Video
+from .models import EncodeProfile
 
 
 class MediaAdmin(admin.ModelAdmin):
@@ -44,5 +47,11 @@ class AudioAdmin(MediaAdmin):
     class Meta:
         model = Audio
 
+
+class EncodeProfileAdmin(admin.ModelAdmin):
+    class Meta:
+        model = EncodeProfile
+
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
+admin.site.register(EncodeProfile, EncodeProfileAdmin)
