@@ -90,8 +90,8 @@ class MediaBase(models.Model):
         raise NotImplementedError('subclasses of MediaBase must provide an encode_cmd() method')
 
     def encode(self, profile):
-        command = shlex.split(self.encode_cmd(profile))
-        process = subprocess.call(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        cmd = shlex.split(self.encode_cmd(profile))
+        subprocess.check_call(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         self.encoded = True
         self.encoding = False
         self.save()
@@ -163,7 +163,7 @@ class Video(MediaBase):
 
     def make_thumbnail(self):
         cmd = shlex.split(self.thumbnail_cmd)
-        process = subprocess.call(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        subprocess.check_call(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         f = open(local_path(self, "%s.jpg" % self.id, absolute=True))
         self.auto_thumbnail.save("%s.jpg" % self.id,
                                  SimpleUploadedFile("%s.jpg" % self.id, f.read(), content_type="image/jpg"),
