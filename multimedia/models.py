@@ -30,7 +30,7 @@ from .storage import OverwritingStorage
 from .conf import multimedia_settings
 
 
-def local_path(instance, filename, absolute=False):
+def multimedia_path(instance, filename, absolute=False):
     relative_path = 'multimedia/%s/%s' % (instance.slug, filename)
     if absolute:
         return os.path.join(settings.MEDIA_ROOT, relative_path)
@@ -70,7 +70,7 @@ class MediaBase(models.Model):
     owner = models.ForeignKey(User, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
 
-    file = models.FileField(_('file'), upload_to=local_path)
+    file = models.FileField(_('file'), upload_to=multimedia_path)
     encoding = models.BooleanField(_('encoding'), default=False, editable=False,
                                    help_text="Indicates this file is currently encoding")
     encoded = models.BooleanField(_('encoded'), default=False, editable=False,
@@ -105,7 +105,7 @@ class MediaBase(models.Model):
               encode_media_complete.si(model, self.id)).apply_async(countdown=5)
 
     def container_path(self, profile):
-        return local_path(self, "%s.%s" % (self.id, profile.container), absolute=True)
+        return multimedia_path(self, "%s.%s" % (self.id, profile.container), absolute=True)
 
     def encode_to_container(self, profile):
         """
@@ -133,7 +133,7 @@ class MediaBase(models.Model):
 
 
 class Video(MediaBase):
-    auto_thumbnail = models.FileField(upload_to=local_path,
+    auto_thumbnail = models.FileField(upload_to=multimedia_path,
                                       null=True, blank=True, editable=False,
                                       storage=OverwritingStorage())
     auto_thumbnail_offset = models.PositiveIntegerField(blank=True, default=4,
@@ -168,7 +168,7 @@ class Video(MediaBase):
     def generate_thumbnail(self):
         command = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
         filename = "%s.jpg" % self.id
-        output_path = local_path(self, filename, absolute=True)
+        output_path = multimedia_path(self, filename, absolute=True)
         args = {'input': self.file.path,
                 'output': output_path,
                 'offset': self.auto_thumbnail_offset}
@@ -177,7 +177,8 @@ class Video(MediaBase):
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         f = open(output_path)
         self.auto_thumbnail.save(filename,
-                                 SimpleUploadedFile(filename, f.read(), content_type="image/jpg"),
+                                 SimpleUploadedFile(filename, f.read(),
+                                                    content_type="image/jpg"),
                                  save=False)
         self.save()
         f.close()
