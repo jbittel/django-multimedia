@@ -8,6 +8,8 @@ import subprocess
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
+from django.db.models.signals import m2m_changed
+from django.db.models.signals import pre_save
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
@@ -22,6 +24,8 @@ from celery import chord
 
 from filer.fields.image import FilerImageField
 
+from .signals import check_file_changed
+from .signals import encode_on_change
 from .storage import OverwritingStorage
 from .conf import multimedia_settings
 
@@ -184,5 +188,5 @@ class Audio(MediaBase):
         verbose_name_plural = "Audio Files"
 
 
-from .signals import check_file_changed
-from .signals import encode
+pre_save.connect(check_file_changed, sender=MediaBase)
+m2m_changed.connect(encode_on_change, sender=MediaBase.profiles.through)

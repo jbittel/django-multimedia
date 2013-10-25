@@ -2,16 +2,13 @@ from filecmp import cmp
 import os
 
 from django.conf import settings
-from django.db.models.signals import m2m_changed
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
-
-from .models import MediaBase
 
 
-@receiver(pre_save, sender=MediaBase)
 def check_file_changed(sender, instance, **kwargs):
     """
+    Signal: pre_save
+    Sender: MediaBase
+
     Prior to saving, check to see if the uploaded file is different
     than the existing file. If so, set it to be encoded.
     """
@@ -25,9 +22,11 @@ def check_file_changed(sender, instance, **kwargs):
         current.file.delete(save=False)
 
 
-@receiver(m2m_changed, sender=MediaBase.profiles.through)
-def encode(sender, instance, action, **kwargs):
+def encode_on_change(sender, instance, action, **kwargs):
     """
+    Signal: m2m_changed
+    Sender: MediaBase.profiles.through
+
     Whenever the configured encoding profiles are changed, encode
     the media if it has not already been encoded. Only pay attention
     to the post_* actions, as that's when the updated relations will
