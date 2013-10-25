@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from forms import VideoAdminForm, AudioAdminForm
 
 from .models import Audio
 from .models import Video
@@ -9,7 +8,7 @@ from .models import EncodeProfile
 class MediaAdmin(admin.ModelAdmin):
     list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified')
     prepopulated_fields = {'slug': ('title',)}
-    list_filter = ('encoded', 'uploaded', 'encoding',)
+    list_filter = ('encoded', 'uploaded', 'encoding')
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -34,7 +33,6 @@ class MediaAdmin(admin.ModelAdmin):
 
 
 class VideoAdmin(MediaAdmin):
-    form = VideoAdminForm
     list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified', 'thumbnail_html',)
 
     class Meta:
@@ -42,8 +40,6 @@ class VideoAdmin(MediaAdmin):
 
 
 class AudioAdmin(MediaAdmin):
-    form = AudioAdminForm
-
     class Meta:
         model = Audio
 
@@ -51,6 +47,7 @@ class AudioAdmin(MediaAdmin):
 class EncodeProfileAdmin(admin.ModelAdmin):
     class Meta:
         model = EncodeProfile
+
 
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
