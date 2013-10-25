@@ -159,10 +159,11 @@ class Video(MediaBase):
         else:
             return self.auto_thumbnail
 
-    def admin_thumbnail(self):
-        return render_to_string("multimedia/screenshot_admin.html", {"img": self.thumbnail})
-    admin_thumbnail.allow_tags = True
-    admin_thumbnail.short_description = "Thumbnail"
+    def thumbnail_html(self):
+        return render_to_string('multimedia/thumbnail.html', {'img': self.thumbnail,
+                                                              'alt': self.title})
+    thumbnail_html.allow_tags = True
+    thumbnail_html.short_description = 'Thumbnail'
 
     def generate_thumbnail(self):
         command = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
