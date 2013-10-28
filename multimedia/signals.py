@@ -7,7 +7,6 @@ from django.conf import settings
 def check_file_changed(sender, instance, **kwargs):
     """
     Signal: pre_save
-    Sender: MediaBase
 
     Prior to saving, check to see if the uploaded file is different
     than the existing file. If so, set it to be encoded.

@@ -161,8 +161,8 @@ class Video(MediaBase):
             return self.auto_thumbnail
 
     def thumbnail_html(self):
-        return render_to_string('multimedia/thumbnail.html', {'img': self.thumbnail,
-                                                              'alt': self.title})
+        return render_to_string('multimedia/thumbnail.html',
+                                {'img': self.thumbnail, 'alt': self.title})
     thumbnail_html.allow_tags = True
     thumbnail_html.short_description = 'Thumbnail'
 
@@ -191,6 +191,6 @@ class Audio(MediaBase):
         verbose_name_plural = "Audio Files"
 
 
-pre_save.connect(check_file_changed, sender=MediaBase)
+pre_save.connect(check_file_changed)
 pre_save.connect(thumbnail_offset_changed, sender=Video)
 m2m_changed.connect(encode_on_change, sender=MediaBase.profiles.through)
