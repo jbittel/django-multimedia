@@ -25,6 +25,7 @@ from celery import chord
 from filer.fields.image import FilerImageField
 
 from .signals import check_file_changed
+from .signals import thumbnail_offset_changed
 from .signals import encode_on_change
 from .storage import OverwritingStorage
 from .conf import multimedia_settings
@@ -191,4 +192,5 @@ class Audio(MediaBase):
 
 
 pre_save.connect(check_file_changed, sender=MediaBase)
+pre_save.connect(thumbnail_offset_changed, sender=Video)
 m2m_changed.connect(encode_on_change, sender=MediaBase.profiles.through)

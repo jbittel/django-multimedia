@@ -22,6 +22,23 @@ def check_file_changed(sender, instance, **kwargs):
         current.file.delete(save=False)
 
 
+def thumbnail_offset_changed(sender, instance, **kwargs):
+    """
+    Signal: pre_save
+    Sender: Video
+
+    If the thumbnail offset is changed, clear the current thumbnail
+    so a new one is generated with the new offset value.
+    """
+    try:
+        current = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        pass
+    else:
+        if current.auto_thumbnail_offset != instance.auto_thumbnail_offset:
+            setattr(instance.auto_thumbnail, 'name', None)
+
+
 def encode_on_change(sender, instance, action, **kwargs):
     """
     Signal: m2m_changed
