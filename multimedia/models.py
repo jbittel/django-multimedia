@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import os
-import paramiko
 import shlex
 import subprocess
 
@@ -24,11 +23,12 @@ from celery import chord
 
 from filer.fields.image import FilerImageField
 
+from .conf import multimedia_settings
 from .signals import check_file_changed
 from .signals import thumbnail_offset_changed
 from .signals import encode_on_change
 from .storage import OverwritingStorage
-from .conf import multimedia_settings
+from .utils import upload_file
 
 
 def multimedia_path(instance, filename, absolute=False):
@@ -123,14 +123,7 @@ class MediaBase(models.Model):
         """
         remote_path = os.path.join(multimedia_settings.MEDIA_SERVER_VIDEO_PATH,
                                    "%s.%s" % (self.id, profile.container))
-        transport = paramiko.Transport((multimedia_settings.MEDIA_SERVER_HOST,
-                                        multimedia_settings.MEDIA_SERVER_PORT))
-        transport.connect(username=multimedia_settings.MEDIA_SERVER_USER,
-                          password=multimedia_settings.MEDIA_SERVER_PASSWORD)
-        sftp = paramiko.SFTPClient.from_transport(transport)
-        sftp.put(self.container_path(profile), remote_path)
-        sftp.close()
-        transport.close()
+        upload_file(self.container_path(profile), remote_path)
 
 
 class Video(MediaBase):
