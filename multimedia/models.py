@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import shlex
 import subprocess
+import tempfile
 
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -19,8 +20,8 @@ try:
 except ImportError:  # Django version < 1.5
     from django.contrib.auth.models import User
 
+from celery import chain
 from celery import chord
-
 from filer.fields.image import FilerImageField
 
 from .conf import multimedia_settings
@@ -100,30 +101,24 @@ class MediaBase(models.Model):
         Encode a ``MediaBase`` subclass using all associated
         ``EncodeProfile``s using a group of Celery tasks.
         """
-        from .tasks import encode_media, encode_media_complete
+        from .tasks import encode_media, upload_media, encode_media_complete
         model = self.__class__.__name__.lower()
-        chord((encode_media.s(model, self.id, p.id) for p in self.profiles.all()),
-              encode_media_complete.si(model, self.id)).apply_async(countdown=5)
+        tmpdir = tempfile.mkdtemp()
+        group = []
+        for p in self.profiles.all():
+            group.append(chain(encode_media.s(model, self.id, p.id, tmpdir),
+                               upload_media.s(model, self.id)))
+        chord((group), encode_media_complete.si(model, self.id, tmpdir)).apply_async(countdown=5)
 
-    def container_path(self, profile):
-        return multimedia_path(self, "%s.%s" % (self.id, profile.container), absolute=True)
-
-    def encode_to_container(self, profile):
+    def encode_to_container(self, profile, tmpdir):
         """
         Encode a ``MediaBase`` subclass using the given profile
-        into the given profile's container.
+        into the given temporary directory.
         """
-        subprocess.check_call(profile.shell_command(self.file.path,
-                                                    self.container_path(profile)),
+        encode_path = os.path.join(tmpdir, "%s.%s" % (self.id, profile.container))
+        subprocess.check_call(profile.shell_command(self.file.path, encode_path),
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-
-    def upload_to_server(self, profile):
-        """
-        Upload an encoded file to a remote media server.
-        """
-        remote_path = os.path.join(multimedia_settings.MEDIA_SERVER_VIDEO_PATH,
-                                   "%s.%s" % (self.id, profile.container))
-        upload_file(self.container_path(profile), remote_path)
+        return encode_path
 
 
 class Video(MediaBase):
