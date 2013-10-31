@@ -1,4 +1,4 @@
-from django.contrib import admin, messages
+from django.contrib import admin
 
 from .models import Audio
 from .models import Video
@@ -6,30 +6,29 @@ from .models import EncodeProfile
 
 
 class MediaAdmin(admin.ModelAdmin):
+    actions = ['re_encode']
     list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified')
-    prepopulated_fields = {'slug': ('title',)}
     list_filter = ('encoded', 'uploaded', 'encoding')
+    prepopulated_fields = {'slug': ('title',)}
 
     def save_model(self, request, obj, form, change):
         if not change:
             obj.owner = request.user
         obj.save()
         if not obj.encoded:
-            messages.success(request, "Your file is being encoded and uploaded.  An email notification will be sent when complete.")
+            self.message_user(request, "Your file is being encoded. An email notification will be sent when complete.")
 
-    def encode_again(self, request, queryset):
+    def re_encode(self, request, queryset):
         for media in queryset:
             media.encoded = False
             media.save()
+            media.encode()
         if len(queryset) == 1:
-            message_bit = "Your file is"
+            message_bit = "file is"
         else:
-            message_bit = "Your files are"
-
-        messages.success(request, "%s being encoded and uploaded.  An email notification will be sent when complete." % message_bit)
-
-    encode_again.short_description = "Re-encode and upload media"
-    actions = [encode_again]
+            message_bit = "files are"
+        self.message_user(request, "Your %s being encoded. An email notification will be sent when complete." % message_bit)
+    re_encode.short_description = "Re-encode selected %(verbose_name_plural)s"
 
 
 class VideoAdmin(MediaAdmin):
