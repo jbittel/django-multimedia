@@ -19,36 +19,7 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding model 'VideoPrev'
-        db.create_table(u'multimedia_videoprev', (
-            ('custom_thumbnail', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['filer.Image'], null=True, blank=True)),
-            (u'mediabase_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['multimedia.MediaBase'], unique=True, primary_key=True)),
-            ('auto_thumbnail', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
-            ('auto_thumbnail_offset', self.gf('django.db.models.fields.PositiveIntegerField')(default=4, blank=True)),
-        ))
-        db.send_create_signal(u'multimedia', ['VideoPrev'])
-
-        # Adding model 'MediaBase'
-        db.create_table(u'multimedia_mediabase', (
-            ('uploaded', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('description', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('encoding', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('file', self.gf('django.db.models.fields.files.FileField')(max_length=100)),
-            ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('encoded', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('slug', self.gf('django.db.models.fields.SlugField')(max_length=255)),
-            ('title', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('created', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified', self.gf('django.db.models.fields.DateTimeField')()),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'multimedia', ['MediaBase'])
-
-        # Adding model 'AudioPrev'
-        db.create_table(u'multimedia_audioprev', (
-            (u'mediabase_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['multimedia.MediaBase'], unique=True, primary_key=True)),
-        ))
-        db.send_create_signal(u'multimedia', ['AudioPrev'])
+        raise RuntimeError("Cannot reverse this migration.")
 
 
     models = {

@@ -8,9 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'MediaBase'
-#        db.delete_table(u'multimedia_mediabase')
-
         # Adding model 'EncodeProfile'
         db.create_table(u'multimedia_encodeprofile', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
