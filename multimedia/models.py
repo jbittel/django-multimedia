@@ -76,8 +76,6 @@ class MediaBase(models.Model):
                                    help_text="Indicates this file is currently encoding")
     encoded = models.BooleanField(_('encoded'), default=False, editable=False,
                                   help_text="Indicates this file has finished encoding")
-    uploaded = models.BooleanField(_('uploaded'), default=False, editable=False,
-                                   help_text="Indicates this file has been uploaded")
 
     class Meta:
         abstract = True
@@ -92,7 +90,6 @@ class MediaBase(models.Model):
         self.modified = now()
         if not self.encoded:
             self.encoding = True
-            self.uploaded = False
         super(MediaBase, self).save(*args, **kwargs)
 
     def encode(self):

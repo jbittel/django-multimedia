@@ -10,8 +10,8 @@ from .models import EncodeProfile
 
 class MediaAdmin(admin.ModelAdmin):
     actions = ['re_encode']
-    list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified')
-    list_filter = ('encoded', 'uploaded', 'encoding')
+    list_display = ('title', 'encoding', 'encoded', 'created', 'modified')
+    list_filter = ('encoded', 'encoding')
     prepopulated_fields = {'slug': ('title',)}
 
     def save_model(self, request, obj, form, change):
@@ -37,7 +37,7 @@ class MediaAdmin(admin.ModelAdmin):
 
 
 class VideoAdmin(MediaAdmin):
-    list_display = ('title', 'encoding', 'encoded', 'uploaded', 'created', 'modified', 'thumbnail_html',)
+    list_display = ('title', 'encoding', 'encoded', 'created', 'modified', 'thumbnail_html',)
 
     class Meta:
         model = Video

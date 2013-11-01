@@ -56,7 +56,6 @@ def encode_media_complete(model, media_id, tmpdir):
     media = media_type.get_object_for_this_type(pk=media_id)
     media.encoding = False
     media.encoded = True
-    media.uploaded = True
     media.save()
 
     # Delete temporary encode directory
