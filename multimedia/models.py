@@ -114,7 +114,9 @@ class MediaBase(models.Model):
         Encode a ``MediaBase`` subclass using the given profile
         into the given temporary directory.
         """
-        encode_path = os.path.join(tmpdir, "%s.%s" % (self.id, profile.container))
+        encode_path = os.path.join(tmpdir, "%s%s.%s" % (str(self.id),
+                                                        str(profile.id),
+                                                        profile.container))
         subprocess.check_call(profile.shell_command(self.file.path, encode_path),
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         return encode_path
