@@ -29,7 +29,6 @@ from .signals import check_file_changed
 from .signals import thumbnail_offset_changed
 from .signals import encode_on_change
 from .storage import OverwritingStorage
-from .utils import upload_file
 
 
 def multimedia_path(instance, filename, absolute=False):
