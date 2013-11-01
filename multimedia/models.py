@@ -88,8 +88,6 @@ class MediaBase(models.Model):
         if not self.id:
             self.created = now()
         self.modified = now()
-        if not self.encoded:
-            self.encoding = True
         super(MediaBase, self).save(*args, **kwargs)
 
     def encode(self):
@@ -98,6 +96,10 @@ class MediaBase(models.Model):
         ``EncodeProfile``s using a group of Celery tasks.
         """
         from .tasks import encode_media, upload_media, encode_media_complete
+
+        self.encoding = True
+        self.save()
+
         model = self.__class__.__name__.lower()
         tmpdir = tempfile.mkdtemp()
         group = []

@@ -24,8 +24,6 @@ class MediaAdmin(admin.ModelAdmin):
 
     def re_encode(self, request, queryset):
         for media in queryset:
-            media.encoded = False
-            media.save()
             media.encode()
         meta = self.model._meta
         if len(queryset) == 1:

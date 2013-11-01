@@ -16,7 +16,6 @@ def check_file_changed(sender, instance, **kwargs):
         if not cmp(os.path.join(settings.MEDIA_ROOT, current.file.name),
                    os.path.join(settings.MEDIA_ROOT, instance.file.file.temporary_file_path())):
             instance.encoded = False
-            instance.encoding = True
         current.file.delete(save=False)
 
 
