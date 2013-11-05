@@ -1,18 +1,24 @@
 django-multimedia
 =================
-A django app used to encode video from the django admin. Uses ffmpeg to encode the video and django-celery to process it in a queue. Supports any video profile you can write an ffmpeg command to accomplish.
 
-Dependancies
-============
+A Django app used to encode video from the Django admin. Supports any video
+profile you can write a command line statement to accomplish.
+::
+   Please note: this project is currently in a state of transition, and much
+   of the documentation below is out-of-date. It will be updated in the near
+   future to reflect the latest changes.
+
+Dependencies
+------------
 
 - django-celery
 - django-filer
 - paramiko
-- pycrpto==2.0.1
+- pycrpto
 - ffmpeg
 
 Getting Started
-=============
+---------------
 
 To get started simply install using ``pip``:
 ::
@@ -41,7 +47,7 @@ Next, you'll need to configure your settings. See **configuration** below.
 Please refer to the documentation for each dependency on instructions on how to install them.
 
 Configuration
-==============
+-------------
 
 You'll need to configure your media profiles and tell the app where to upload the encoded file to after completion.  You can use any ``ffmpeg`` command as long as you have the codecs needed installed.  Use the settings ''MULTIMEDIA_VIDEO_PROFILES'' and ''MULTIMEDIA_AUDIO_PROFILES''  to accomplish this.  
 
@@ -109,7 +115,8 @@ The following settings are used to upload the media after encoding:
     MEDIA_SERVER_VIDEO_PATH = "path/on/some/server" % (MEDIA_SERVER_VIDEO_BUCKET,)
    
 Installing FFMPEG
-===============
+-----------------
+
 On Mac OS X you should be able to install ``ffmpeg`` using ``homebrew``:
 ::
     brew install ffmpeg
