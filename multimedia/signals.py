@@ -24,16 +24,18 @@ def thumbnail_offset_changed(sender, instance, **kwargs):
     Signal: pre_save
     Sender: Video
 
-    If the thumbnail offset is changed, clear the current thumbnail
-    so a new one is generated with the new offset value.
+    If the thumbnail offset has changed, generate a new one with the
+    changed offset value.
     """
+    from .tasks import generate_thumbnail
     try:
         current = sender.objects.get(pk=instance.pk)
     except sender.DoesNotExist:
         pass
     else:
         if current.auto_thumbnail_offset != instance.auto_thumbnail_offset:
-            setattr(instance.auto_thumbnail, 'name', None)
+            generate_thumbnail.apply_async((instance.model_name, current.pk),
+                                           countdown=5)
 
 
 def encode_on_change(sender, instance, action, **kwargs):

@@ -90,6 +90,10 @@ class MediaBase(models.Model):
         self.modified = now()
         super(MediaBase, self).save(*args, **kwargs)
 
+    @property
+    def model_name(self):
+        return self.__class__.__name__.lower()
+
     def encode(self):
         """
         Encode a ``MediaBase`` subclass using all associated
@@ -100,13 +104,12 @@ class MediaBase(models.Model):
         self.encoding = True
         self.save()
 
-        model = self.__class__.__name__.lower()
         tmpdir = tempfile.mkdtemp()
         group = []
         for p in self.profiles.all():
-            group.append(chain(encode_media.s(model, self.id, p.id, tmpdir),
-                               upload_media.s(model, self.id)))
-        chord((group), encode_media_complete.si(model, self.id, tmpdir)).apply_async(countdown=5)
+            group.append(chain(encode_media.s(self.model_name, self.id, p.id, tmpdir),
+                               upload_media.s(self.model_name, self.id)))
+        chord((group), encode_media_complete.si(self.model_name, self.id, tmpdir)).apply_async(countdown=5)
 
     def encode_to_container(self, profile, tmpdir):
         """
@@ -122,9 +125,9 @@ class MediaBase(models.Model):
 
 
 class Video(MediaBase):
-    auto_thumbnail = models.FileField(upload_to=multimedia_path,
-                                      null=True, blank=True, editable=False,
-                                      storage=OverwritingStorage())
+    auto_thumbnail = models.ImageField(upload_to=multimedia_path,
+                                       null=True, blank=True, editable=False,
+                                       storage=OverwritingStorage())
     auto_thumbnail_offset = models.PositiveIntegerField(blank=True, default=4,
                                                         help_text="Offset for automatic thumbnail, in seconds")
     custom_thumbnail = FilerImageField(blank=True, null=True,
@@ -136,10 +139,11 @@ class Video(MediaBase):
 
     def save(self, *args, **kwargs):
         from .tasks import generate_thumbnail
+        created = self.pk is None
         super(Video, self).save(*args, **kwargs)
-        if not self.auto_thumbnail:
-            model = self.__class__.__name__.lower()
-            generate_thumbnail.apply_async((model, self.id), countdown=5)
+        if created:
+            generate_thumbnail.apply_async((self.model_name, self.pk),
+                                           countdown=5)
 
     @property
     def thumbnail(self):
@@ -167,9 +171,7 @@ class Video(MediaBase):
         f = open(output_path)
         self.auto_thumbnail.save(filename,
                                  SimpleUploadedFile(filename, f.read(),
-                                                    content_type="image/jpg"),
-                                 save=False)
-        self.save()
+                                                    content_type="image/jpg"))
         f.close()
 
 
