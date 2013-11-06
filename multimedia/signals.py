@@ -18,6 +18,13 @@ def check_file_changed(sender, instance, **kwargs):
             instance.encoded = False
         current.file.delete(save=False)
 
+    # Store the currently configured encoding profiles
+    # so we can later detect if they have changed
+    if instance.pk:
+        instance._profiles = set(list(instance.profiles.values_list('pk', flat=True)))
+    else:
+        instance._profiles = set(list())
+
 
 def thumbnail_offset_changed(sender, instance, **kwargs):
     """
@@ -38,16 +45,16 @@ def thumbnail_offset_changed(sender, instance, **kwargs):
                                            countdown=5)
 
 
-def encode_on_change(sender, instance, action, **kwargs):
+def encode_profile_changed(sender, instance, action, **kwargs):
     """
     Signal: m2m_changed
     Sender: MediaBase.profiles.through
 
-    Whenever the configured encoding profiles are changed, encode
-    the media if it has not already been encoded. Only pay attention
-    to the post_* actions, as that's when the updated relations will
-    be found in the table.
+    If the configured encoding profiles change, encode the media if it
+    is not currently encoding. Only pay attention to the post_add
+    action, as that's when the updated relations will be available.
     """
-    if action in ['post_add', 'post_remove']:
-        if not instance.encoded:
+    if action in ['post_add']:
+        profiles = set(kwargs['pk_set'])
+        if not instance.encoding and instance._profiles != profiles:
             instance.encode()
