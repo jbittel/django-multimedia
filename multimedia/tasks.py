@@ -67,7 +67,7 @@ def encode_media_complete(model, media_id, tmpdir):
     media.owner.email_user(subject, message, from_email=from_email)
 
 
-@task(max_retries=3)
+@task(max_retries=3, ignore_result=True)
 def generate_thumbnail(model, media_id):
     media_type = ContentType.objects.get(app_label='multimedia', model=model)
     media = media_type.get_object_for_this_type(pk=media_id)
