@@ -24,7 +24,8 @@ class MediaAdmin(admin.ModelAdmin):
 
     def re_encode(self, request, queryset):
         for media in queryset:
-            media.encode()
+            if not media.encoding:
+                media.encode()
         meta = self.model._meta
         if len(queryset) == 1:
             message_bit = "%s is" % force_text(meta.verbose_name)
