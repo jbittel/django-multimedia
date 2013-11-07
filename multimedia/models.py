@@ -94,22 +94,33 @@ class MediaBase(models.Model):
     def model_name(self):
         return self.__class__.__name__.lower()
 
-    def encode(self):
+    def encode(self, profiles=[]):
         """
-        Encode a ``MediaBase`` subclass using all associated
-        ``EncodeProfile``s using a group of Celery tasks.
+        Encode media with the specified ``EncodeProfile``s using
+        asynchronous Celery tasks. The media is encoded into a
+        temporary directory and then uploaded to the configured media
+        server.
+
+        If ``profiles`` is specified, encode with that list of
+        ``EncodeProfile`` primary keys; otherwise, encode with all
+        associated ``EncodeProfile``s.
         """
         from .tasks import encode_media, upload_media, encode_media_complete
 
         self.encoding = True
         self.save()
 
+        if not profiles:
+            profiles = list(self.profiles.values_list('pk', flat=True))
+
         tmpdir = tempfile.mkdtemp()
         group = []
-        for p in self.profiles.all():
-            group.append(chain(encode_media.s(self.model_name, self.id, p.id, tmpdir),
+        for profile_id in profiles:
+            group.append(chain(encode_media.s(self.model_name, self.id,
+                                              profile_id, tmpdir),
                                upload_media.s(self.model_name, self.id)))
-        chord((group), encode_media_complete.si(self.model_name, self.id, tmpdir)).apply_async(countdown=5)
+        chord((group), encode_media_complete.si(self.model_name, self.id,
+                                                tmpdir)).apply_async(countdown=5)
 
     def encode_to_container(self, profile, tmpdir):
         """
