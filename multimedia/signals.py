@@ -48,7 +48,6 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
     """
     if action in ['post_add']:
         added_profiles = list(kwargs['pk_set'].difference(instance._profiles))
-        print '********** ', added_profiles
         if added_profiles and not instance.encoding:
             instance.encode(profiles=added_profiles)
 
