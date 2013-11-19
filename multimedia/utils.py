@@ -15,24 +15,19 @@ def upload_file(local_path, remote_path):
     transport.connect(username=multimedia_settings.MEDIA_SERVER_USER,
                       password=multimedia_settings.MEDIA_SERVER_PASSWORD)
     sftp = paramiko.SFTPClient.from_transport(transport)
-    sftp_mkdir_p(sftp, os.path.dirname(remote_path))
+    _sftp_mkdir(sftp, remote_path)
     sftp.put(local_path, remote_path)
     sftp.close()
     transport.close()
 
 
-def sftp_mkdir_p(sftp, remote_dir):
+def _sftp_mkdir(sftp, path):
     """
+    Create any missing remote directories in the path.
     """
-    if remote_dir == '/':
-        sftp.chdir('/')
-        return
-    if remote_dir == '':
-        return
-    path, tail = os.path.split(remote_dir)
-    sftp_mkdir_p(sftp, path)
+    head = os.path.dirname(path)
     try:
-        sftp.chdir(tail)
+        sftp.stat(head)
     except IOError:
-        sftp.mkdir(tail)
-        sftp.chdir(tail)
+        _sftp_mkdir(sftp, head)
+        sftp.mkdir(head)
