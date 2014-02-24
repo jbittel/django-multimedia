@@ -14,16 +14,12 @@ from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-try:
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-except ImportError:  # Django version < 1.5
-    from django.contrib.auth.models import User
 
 from celery import chain
 from celery import chord
 from filer.fields.image import FilerImageField
 
+from .compat import user_model
 from .conf import multimedia_settings
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
@@ -68,7 +64,7 @@ class MediaBase(models.Model):
     description = models.TextField(_('description'), blank=True)
     created = models.DateTimeField(_('created'), editable=False)
     modified = models.DateTimeField(_('modified'), editable=False)
-    owner = models.ForeignKey(User, verbose_name=_('owner'), editable=False)
+    owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
 
     file = models.FileField(_('file'), upload_to=multimedia_path)
