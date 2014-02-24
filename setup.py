@@ -34,9 +34,7 @@ setup(
     version=version,
     url='http://github.com/jbittel/django-multimedia',
     license='BSD',
-    description='A Django app for encoding and uploading video within the '
-                'Django admin. Supports any video profile you can write a '
-                'command line statement to accomplish.',
+    description='Encode multimedia from the Django admin interface.'
     long_description=readme,
     author='Jason Bittel',
     author_email='jason.bittel@gmail.com',

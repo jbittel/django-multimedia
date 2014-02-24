@@ -1,21 +1,12 @@
 django-multimedia
 =================
 
-A Django app used to encode video from the Django admin. Supports any video
+Encode multimedia from the Django admin interface. Supports any encoding
 profile you can write a command line statement to accomplish.
 ::
    Please note: this project is currently in a state of transition, and much
    of the documentation below is out-of-date. It will be updated in the near
    future to reflect the latest changes.
-
-Dependencies
-------------
-
-- django-celery
-- django-filer
-- paramiko
-- pycrpto
-- ffmpeg
 
 Getting Started
 ---------------
