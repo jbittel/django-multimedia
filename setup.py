@@ -32,7 +32,7 @@ with open('README.rst') as f:
 setup(
     name='django-multimedia',
     version=version,
-    url='http://github.com/jbittel/django-multimedia',
+    url='https://github.com/jbittel/django-multimedia',
     license='BSD',
     description='Encode multimedia from the Django admin interface.'
     long_description=readme,
