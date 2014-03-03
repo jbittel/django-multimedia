@@ -34,7 +34,7 @@ setup(
     version=version,
     url='https://github.com/jbittel/django-multimedia',
     license='BSD',
-    description='Encode multimedia from the Django admin interface.'
+    description='Encode and upload multimedia from the Django admin interface',
     long_description=readme,
     author='Jason Bittel',
     author_email='jason.bittel@gmail.com',
