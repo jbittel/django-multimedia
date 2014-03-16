@@ -9,3 +9,4 @@ pip-log.txt
 build
 dist
 *.egg-info
+.tox/
