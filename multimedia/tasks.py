@@ -63,8 +63,7 @@ def encode_media_complete(model, media_id, tmpdir):
 
     subject = "Multimedia Uploaded (%s)" % media.title
     message = render_to_string("multimedia/email_notification.txt", {"media": media})
-    from_email = multimedia_settings.MULTIMEDIA_NOTIFICATION_EMAIL
-    media.owner.email_user(subject, message, from_email=from_email)
+    media.owner.email_user(subject, message)
 
 
 @task(max_retries=3, ignore_result=True)
