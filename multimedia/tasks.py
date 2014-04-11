@@ -23,7 +23,7 @@ def encode_media(model, media_id, profile_id, tmpdir):
     profile = EncodeProfile.objects.get(pk=profile_id)
     logger.info("Encoding %s to %s" % (media, profile))
     try:
-        encode_path = media.encode_to_container(profile, tmpdir)
+        encode_path = profile.encode(media, tmpdir)
     except Exception as exc:
         logger.info("Encoding failed for %s, retrying" % media)
         raise encode_media.retry(exc=exc, countdown=60)

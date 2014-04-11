@@ -54,6 +54,17 @@ class EncodeProfile(models.Model):
         args = {'input': input_path, 'output': output_path}
         return shlex.split(self.command % args)
 
+    def encode(self, media, output_dir):
+        """
+        Encode media into a temporary directory for the current
+        encoding profile.
+        """
+        encode_path = os.path.join(output_dir, "%d%d.%s" % (media.id, self.id,
+                                                            self.container))
+        subprocess.check_call(self.shell_command(media.file.path, encode_path),
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        return encode_path
+
 
 @python_2_unicode_compatible
 class MediaBase(models.Model):
@@ -117,18 +128,6 @@ class MediaBase(models.Model):
                                upload_media.s(self.model_name, self.id)))
         chord((group), encode_media_complete.si(self.model_name, self.id,
                                                 tmpdir)).apply_async(countdown=5)
-
-    def encode_to_container(self, profile, tmpdir):
-        """
-        Encode a ``MediaBase`` subclass using the given profile
-        into the given temporary directory.
-        """
-        encode_path = os.path.join(tmpdir, "%s%s.%s" % (str(self.id),
-                                                        str(profile.id),
-                                                        profile.container))
-        subprocess.check_call(profile.shell_command(self.file.path, encode_path),
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        return encode_path
 
 
 class Video(MediaBase):
