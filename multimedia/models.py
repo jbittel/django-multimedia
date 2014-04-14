@@ -28,6 +28,9 @@ from .storage import OverwritingStorage
 
 
 def multimedia_path(instance, filename, absolute=False):
+    """
+    Build a unique path for uploaded media files.
+    """
     relative_path = 'multimedia/%s/%s' % (instance.slug, filename)
     if absolute:
         return os.path.join(settings.MEDIA_ROOT, relative_path)
@@ -51,6 +54,9 @@ class EncodeProfile(models.Model):
         return self.name
 
     def shell_command(self, input_path, output_path):
+        """
+        Interpolate paths into the given encoding command.
+        """
         args = {'input': input_path, 'output': output_path}
         return shlex.split(self.command % args)
 
@@ -69,6 +75,8 @@ class EncodeProfile(models.Model):
 @python_2_unicode_compatible
 class MediaBase(models.Model):
     """
+    An abstract base class implementing common fields and methods for
+    individual media type subclasses.
     """
     title = models.CharField(_('title'), max_length=255)
     slug = models.SlugField(_('slug'), max_length=255)
