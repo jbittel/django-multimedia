@@ -27,7 +27,7 @@ from .signals import thumbnail_offset_changed
 from .storage import OverwritingStorage
 
 
-def multimedia_path(instance, filename, absolute=False):
+def get_upload_path(instance, filename, absolute=False):
     """
     Build a unique path for uploaded media files.
     """
@@ -86,7 +86,7 @@ class MediaBase(models.Model):
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
 
-    file = models.FileField(_('file'), upload_to=multimedia_path)
+    file = models.FileField(_('file'), upload_to=get_upload_path)
     encoding = models.BooleanField(_('encoding'), default=False, editable=False,
                                    help_text="Indicates this file is currently encoding")
     encoded = models.BooleanField(_('encoded'), default=False, editable=False,
@@ -139,7 +139,7 @@ class MediaBase(models.Model):
 
 
 class Video(MediaBase):
-    auto_thumbnail = models.ImageField(upload_to=multimedia_path,
+    auto_thumbnail = models.ImageField(upload_to=get_upload_path,
                                        null=True, blank=True, editable=False,
                                        storage=OverwritingStorage())
     auto_thumbnail_offset = models.PositiveIntegerField(blank=True, default=4,
@@ -175,7 +175,7 @@ class Video(MediaBase):
     def generate_thumbnail(self):
         command = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
         filename = "%s.jpg" % self.id
-        output_path = multimedia_path(self, filename, absolute=True)
+        output_path = get_upload_path(self, filename, absolute=True)
         args = {'input': self.file.path,
                 'output': output_path,
                 'offset': self.auto_thumbnail_offset}
