@@ -51,9 +51,9 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Topic :: Internet :: WWW/HTTP',
         'Topic :: Multimedia :: Video',
-        'Topic :: Multimedia :: Sound/Audio',
         'Topic :: Multimedia :: Video :: Conversion',
+        'Topic :: Multimedia :: Sound/Audio',
+        'Topic :: Multimedia :: Sound/Audio :: Conversion',
     ],
 )
