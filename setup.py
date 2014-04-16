@@ -22,7 +22,6 @@ package_data = {
 
 install_requires = [
     'django-celery',
-    'django-filer',
     'paramiko',
 ]
 

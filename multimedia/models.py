@@ -6,25 +6,19 @@ import subprocess
 import tempfile
 
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_save
-from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from celery import chain
 from celery import chord
-from filer.fields.image import FilerImageField
 
 from .compat import user_model
-from .conf import multimedia_settings
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
-from .signals import thumbnail_offset_changed
-from .storage import OverwritingStorage
 
 
 def get_upload_path(instance, filename, absolute=False):
@@ -139,54 +133,9 @@ class MediaBase(models.Model):
 
 
 class Video(MediaBase):
-    auto_thumbnail = models.ImageField(upload_to=get_upload_path,
-                                       null=True, blank=True, editable=False,
-                                       storage=OverwritingStorage())
-    auto_thumbnail_offset = models.PositiveIntegerField(blank=True, default=4,
-                                                        help_text="Offset for automatic thumbnail, in seconds")
-    custom_thumbnail = FilerImageField(blank=True, null=True,
-                                       help_text="Upload a custom thumbnail image")
-
     class Meta:
         verbose_name = "Video File"
         verbose_name_plural = "Video Files"
-
-    def save(self, *args, **kwargs):
-        from .tasks import generate_thumbnail
-        created = self.pk is None
-        super(Video, self).save(*args, **kwargs)
-        if created:
-            generate_thumbnail.apply_async((self.model_name, self.pk),
-                                           countdown=5)
-
-    @property
-    def thumbnail(self):
-        if self.custom_thumbnail:
-            return self.custom_thumbnail
-        else:
-            return self.auto_thumbnail
-
-    def thumbnail_html(self):
-        return render_to_string('multimedia/thumbnail.html',
-                                {'img': self.thumbnail, 'alt': self.title})
-    thumbnail_html.allow_tags = True
-    thumbnail_html.short_description = 'Thumbnail'
-
-    def generate_thumbnail(self):
-        command = multimedia_settings.MULTIMEDIA_THUMBNAIL_CMD
-        filename = "%s.jpg" % self.id
-        output_path = get_upload_path(self, filename, absolute=True)
-        args = {'input': self.file.path,
-                'output': output_path,
-                'offset': self.auto_thumbnail_offset}
-        shell_command = shlex.split(command % args)
-        subprocess.check_call(shell_command,
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        f = open(output_path)
-        self.auto_thumbnail.save(filename,
-                                 SimpleUploadedFile(filename, f.read(),
-                                                    content_type="image/jpg"))
-        f.close()
 
 
 class Audio(MediaBase):
@@ -197,5 +146,4 @@ class Audio(MediaBase):
 
 pre_save.connect(set_encode_profiles, sender=Video)
 pre_save.connect(set_encode_profiles, sender=Audio)
-pre_save.connect(thumbnail_offset_changed, sender=Video)
 m2m_changed.connect(encode_profiles_changed, sender=MediaBase.profiles.through)

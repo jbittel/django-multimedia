@@ -36,7 +36,7 @@ class MediaAdmin(admin.ModelAdmin):
 
 
 class VideoAdmin(MediaAdmin):
-    list_display = ('title', 'encoding', 'encoded', 'created', 'modified', 'thumbnail_html',)
+    list_display = ('title', 'encoding', 'encoded', 'created', 'modified')
 
     class Meta:
         model = Video

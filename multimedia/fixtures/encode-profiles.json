@@ -39,9 +39,9 @@
     "pk": 5, 
     "model": "multimedia.encodeprofile", 
     "fields": {
-        "container": "f4v", 
-        "command": "ffmpeg -y -i \"%(input)s\" -f mp4 -acodec libfaac -ab 128k -vcodec libx264 -b:v 690k -ac 1 -s 620x350 -r 30 \"%(output)s\"", 
-        "name": "Flash"
+        "container": "jpg",
+        "command": "ffmpeg -y -i \"%(input)s\" -ss 00:00:10 -frames:v 1 -vf scale=-1:360 \"%(output)s\"",
+        "name": "Video Thumbnail"
     }
 }
 ]

@@ -50,22 +50,3 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
         added_profiles = list(kwargs['pk_set'].difference(instance._profiles))
         if added_profiles and not instance.encoding:
             instance.encode(profiles=added_profiles)
-
-
-def thumbnail_offset_changed(sender, instance, **kwargs):
-    """
-    Signal: pre_save
-    Sender: Video
-
-    If the thumbnail offset has changed, regenerate it with the
-    changed offset value.
-    """
-    from .tasks import generate_thumbnail
-    try:
-        current = sender.objects.get(pk=instance.pk)
-    except sender.DoesNotExist:
-        pass
-    else:
-        if current.auto_thumbnail_offset != instance.auto_thumbnail_offset:
-            generate_thumbnail.apply_async((instance.model_name, current.pk),
-                                           countdown=5)

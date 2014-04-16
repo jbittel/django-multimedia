@@ -64,16 +64,3 @@ def encode_media_complete(model, media_id, tmpdir):
     subject = "Multimedia Uploaded (%s)" % media.title
     message = render_to_string("multimedia/email_notification.txt", {"media": media})
     media.owner.email_user(subject, message)
-
-
-@task(max_retries=3, ignore_result=True)
-def generate_thumbnail(model, media_id):
-    media_type = ContentType.objects.get(app_label='multimedia', model=model)
-    media = media_type.get_object_for_this_type(pk=media_id)
-    logger.info("Generating thumbnail for %s" % media)
-    try:
-        media.generate_thumbnail()
-    except Exception as exc:
-        logger.info("Thumbnail generation failed for %s, retrying" % media)
-        raise generate_thumbnail.retry(exc=exc, countdown=60)
-    logger.info("Done generating thumbnail for %s" % media)
