@@ -40,7 +40,7 @@
     "model": "multimedia.encodeprofile", 
     "fields": {
         "container": "jpg",
-        "command": "ffmpeg -y -i \"%(input)s\" -ss 00:00:10 -frames:v 1 -vf scale=-1:360 \"%(output)s\"",
+        "command": "ffmpeg -y -i \"%(input)s\" -ss 10 -frames:v 1 -vf scale=-1:360 \"%(output)s\"",
         "name": "Video Thumbnail"
     }
 }
