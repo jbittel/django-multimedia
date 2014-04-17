@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import logging
 import os
 import shlex
 import subprocess
@@ -19,6 +20,9 @@ from celery import chord
 from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_upload_path(instance, filename, absolute=False):
@@ -61,8 +65,18 @@ class EncodeProfile(models.Model):
         """
         encode_path = os.path.join(output_dir, "%d%d.%s" % (media.id, self.id,
                                                             self.container))
-        subprocess.check_call(self.shell_command(media.file.path, encode_path),
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        command = self.shell_command(media.file.path, encode_path)
+        try:
+            subprocess.check_call(command, stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            logger.error("Encoding command returned %d while executing '%s'" %
+                         (e.returncode, ' '.join(e.cmd)))
+            raise
+        except OSError:
+            logger.error("Could not find encoding command '%s'" % command[0])
+            raise
+
         return encode_path
 
 
