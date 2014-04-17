@@ -16,14 +16,8 @@ packages = [
 
 package_data = {
     '': ['AUTHORS', 'LICENSE', 'README.rst'],
-    'multimedia': ['fixtures/*.json',
-                   'templates/multimedia/*.html', 'templates/multimedia/*.txt'],
+    'multimedia': ['fixtures/*.json', 'templates/multimedia/*.txt'],
 }
-
-install_requires = [
-    'django-celery',
-    'paramiko',
-]
 
 with open('README.rst') as f:
     readme = f.read()
@@ -39,7 +33,6 @@ setup(
     author_email='jason.bittel@gmail.com',
     package_dir={'multimedia': 'multimedia'},
     packages=packages,
-    install_requires=install_requires,
     include_package_data=True,
     zip_safe=False,
     classifiers=[
@@ -54,5 +47,9 @@ setup(
         'Topic :: Multimedia :: Video :: Conversion',
         'Topic :: Multimedia :: Sound/Audio',
         'Topic :: Multimedia :: Sound/Audio :: Conversion',
+    ],
+    install_requires=[
+        'celery>=3.1',
+        'paramiko',
     ],
 )

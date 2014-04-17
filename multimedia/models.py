@@ -114,7 +114,7 @@ class MediaBase(models.Model):
         ``EncodeProfile`` primary keys; otherwise, encode with all
         associated ``EncodeProfile``s.
         """
-        from .tasks import encode_media, upload_media, encode_media_complete
+        from .tasks import encode_media, upload_media, encode_complete
 
         self.encoding = True
         self.save()
@@ -125,11 +125,9 @@ class MediaBase(models.Model):
         tmpdir = tempfile.mkdtemp()
         group = []
         for profile_id in profiles:
-            group.append(chain(encode_media.s(self.model_name, self.id,
-                                              profile_id, tmpdir),
+            group.append(chain(encode_media.s(self.model_name, self.id, profile_id, tmpdir),
                                upload_media.s(self.model_name, self.id)))
-        chord((group), encode_media_complete.si(self.model_name, self.id,
-                                                tmpdir)).apply_async(countdown=5)
+        chord((group), encode_complete.si(self.model_name, self.id, tmpdir)).apply_async()
 
 
 class Video(MediaBase):
