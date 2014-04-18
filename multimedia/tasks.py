@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import os
 from shutil import rmtree
 
 from django.contrib.contenttypes.models import ContentType
@@ -10,9 +9,8 @@ from django.template.loader import render_to_string
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
-from .conf import multimedia_settings
 from .models import EncodeProfile
-from .utils import upload_file
+from .models import RemoteStorage
 
 
 logger = get_task_logger(__name__)
@@ -36,22 +34,31 @@ def encode_media(self, model, media_id, profile_id, tmpdir):
 
 
 @shared_task(bind=True, max_retries=3)
-def upload_media(self, encode_path, model, media_id):
+def upload_media(self, encode_path, model, media_id, profile_id):
     """
-    Upload an encoded media file to the configured remote
-    media server. The remote path is based off of the media
-    server path setting and the encoded media filename.
+    Upload an encoded media file to the configured remote storage.
     """
-    filename = os.path.basename(encode_path)
-    remote_path = os.path.join(multimedia_settings.MEDIA_SERVER_PATH,
-                               model, str(media_id), filename)
-    logger.info("Uploading %s to %s" % (filename, remote_path))
     try:
-        upload_file(encode_path, remote_path)
+        media_type = ContentType.objects.get(app_label='multimedia', model=model)
+        media = media_type.get_object_for_this_type(pk=media_id)
+        profile = EncodeProfile.objects.get(pk=profile_id)
+    except ObjectDoesNotExist as exc:
+        raise self.retry(exc=exc, countdown=5)
+
+    try:
+        storage = RemoteStorage.objects.get(content_type__pk=media_type.id,
+                                            profile=profile)
+    except RemoteStorage.DoesNotExist:
+        storage = RemoteStorage(content_object=media, profile=profile)
+
+    logger.info("Uploading %s to remote storage" % encode_path)
+    try:
+        storage.upload(encode_path)
+        storage.save()
     except Exception as exc:
-        logger.info("Upload failed for %s, retrying" % filename)
+        logger.info("Upload failed for %s, retrying" % encode_path)
         raise self.retry(exc=exc, countdown=60)
-    logger.info("Finished uploading %s to %s" % (filename, remote_path))
+    logger.info("Finished uploading %s to remote storage" % encode_path)
 
 
 @shared_task

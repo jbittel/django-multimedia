@@ -7,6 +7,9 @@ import subprocess
 import tempfile
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_save
@@ -20,6 +23,7 @@ from celery import chord
 from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
+from .utils import import_by_path
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +82,63 @@ class EncodeProfile(models.Model):
             raise
 
         return encode_path
+
+
+@python_2_unicode_compatible
+class RemoteStorage(models.Model):
+    """
+    Represents a specific encoded file that has been uploaded to the
+    remote server.
+    """
+    content_type = models.ForeignKey(ContentType)
+    media_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'media_id')
+    profile = models.ForeignKey(EncodeProfile)
+    created = models.DateTimeField(_('created'), editable=False)
+    modified = models.DateTimeField(_('modified'), editable=False)
+
+    def __str__(self):
+        return self.remote_path
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created = now()
+        self.modified = now()
+        super(RemoteStorage, self).save(*args, **kwargs)
+
+    @property
+    def remote_filename(self):
+        """
+        Return the remote filename from the associated media and profile.
+        """
+        return "%d%d.%s" % (self.media_id, self.profile_id,
+                            self.profile.container)
+
+    @property
+    def remote_path(self):
+        """
+        Return the remote path from the associated media and profile.
+        """
+        return os.path.join(self.content_object.model_name, str(self.media_id),
+                            self.remote_filename)
+
+    def upload(self, local_path):
+        """
+        Upload a local file to remote storage, using the configured
+        storage backend.
+        """
+        storage_class = getattr(settings, 'MULTIMEDIA_FILE_STORAGE', None)
+        if storage_class is None:
+            error = ('MULTIMEDIA_FILE_STORAGE must be specified in your '
+                     'Django settings file')
+            raise ImproperlyConfigured(error)
+
+        remote_storage = import_by_path(storage_class)()
+        try:
+            remote_storage.save(self.remote_path, open(local_path))
+        except Exception:
+            logger.error("Error saving '%s' to remote storage" % local_path)
+            raise
 
 
 @python_2_unicode_compatible
@@ -140,7 +201,7 @@ class MediaBase(models.Model):
         group = []
         for profile_id in profiles:
             group.append(chain(encode_media.s(self.model_name, self.id, profile_id, tmpdir),
-                               upload_media.s(self.model_name, self.id)))
+                               upload_media.s(self.model_name, self.id, profile_id)))
         chord((group), encode_complete.si(self.model_name, self.id, tmpdir)).apply_async()
 
 

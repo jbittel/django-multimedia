@@ -50,6 +50,6 @@ setup(
     ],
     install_requires=[
         'celery>=3.1',
-        'paramiko',
+        'django-storages',
     ],
 )
