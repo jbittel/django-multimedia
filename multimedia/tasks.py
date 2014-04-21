@@ -47,7 +47,7 @@ def upload_media(self, encode_path, model, media_id, profile_id):
 
     try:
         storage = RemoteStorage.objects.get(content_type__pk=media_type.id,
-                                            profile=profile)
+                                            media_id=media.id, profile=profile)
     except RemoteStorage.DoesNotExist:
         storage = RemoteStorage(content_object=media, profile=profile)
 
