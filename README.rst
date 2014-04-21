@@ -23,22 +23,14 @@ Add ``multimedia`` to your installed apps and ``syncdb``. If you are using
 Your installed apps should look something like this::
 
    INSTALLED_APPS = (
-       'django.contrib.auth',
-       'django.contrib.contenttypes',
-       'django.contrib.sessions',
-       'django.contrib.sites',
-       'django.contrib.messages',
-       'django.contrib.admin',
-       'djcelery',
-       'filer',
+       # ...existing apps...
        'multimedia',
-       'appmedia',
-       'easy_thumbnails',
    )
 
 Next, you'll need to configure your settings. See **configuration** below.
 
-Please refer to the documentation for each dependency on instructions on how to install them.
+Please refer to the documentation for each dependency on instructions on
+how to install and configure them.
 
 Configuration
 -------------
