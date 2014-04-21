@@ -145,6 +145,24 @@ class RemoteStorage(models.Model):
             logger.error("Error removing temporary file '%s': %s" % (local_path, e))
 
 
+class MediaManager(models.Manager):
+    def by_container(self, containers):
+        """
+        Return a queryset with media files that have been encoded into
+        one of the given set of containers. Containers should be
+        specified as a list of strings.
+        """
+        return self.filter(storage__profile__container__in=containers)
+
+    def by_profile(self, profiles=[]):
+        """
+        Return a queryset with media files that have been encoded into
+        one of the given set of ``EncodeProfile``s. Profiles should be
+        specified as a list of ``EncodeProfile`` instances.
+        """
+        return self.filter(storage__profile__in=profiles)
+
+
 @python_2_unicode_compatible
 class MediaBase(models.Model):
     """
@@ -158,12 +176,10 @@ class MediaBase(models.Model):
     modified = models.DateTimeField(_('modified'), editable=False)
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
-
+    storage = generic.GenericRelation(RemoteStorage, object_id_field='media_id')
     file = models.FileField(_('file'), upload_to=get_upload_path)
-    encoding = models.BooleanField(_('encoding'), default=False, editable=False,
-                                   help_text="Indicates this file is currently encoding")
-    encoded = models.BooleanField(_('encoded'), default=False, editable=False,
-                                  help_text="Indicates this file has finished encoding")
+
+    objects = MediaManager()
 
     class Meta:
         abstract = True
@@ -194,9 +210,6 @@ class MediaBase(models.Model):
         associated ``EncodeProfile``s.
         """
         from .tasks import encode_media, upload_media, encode_complete
-
-        self.encoding = True
-        self.save()
 
         if not profiles:
             profiles = list(self.profiles.values_list('pk', flat=True))

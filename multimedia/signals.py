@@ -41,12 +41,11 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
     Signal: m2m_changed
     Sender: MediaBase.profiles.through
 
-    If the associated encoding profiles change, encode the media
-    using all added profiles if it is not currently encoding. Only
-    pay attention to the post_add action, as that's when the updated
-    relations are available.
+    If the associated encoding profiles change, encode the media using
+    all added profiles. Only pay attention to the post_add action, as
+    that's when the updated relations are available.
     """
     if action in ['post_add']:
         added_profiles = list(kwargs['pk_set'].difference(instance._profiles))
-        if added_profiles and not instance.encoding:
+        if added_profiles:
             instance.encode(profiles=added_profiles)

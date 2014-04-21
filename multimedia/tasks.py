@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-from shutil import rmtree
-
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import render_to_string
@@ -65,9 +63,6 @@ def upload_media(self, encode_path, model, media_id, profile_id):
 def encode_complete(model, media_id):
     media_type = ContentType.objects.get(app_label='multimedia', model=model)
     media = media_type.get_object_for_this_type(pk=media_id)
-    media.encoding = False
-    media.encoded = True
-    media.save()
 
     subject = "Multimedia Uploaded (%s)" % media.title
     message = render_to_string("multimedia/email_notification.txt", {"media": media})

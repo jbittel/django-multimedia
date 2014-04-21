@@ -10,22 +10,17 @@ from .models import EncodeProfile
 
 class MediaAdmin(admin.ModelAdmin):
     actions = ['re_encode']
-    list_display = ('title', 'encoding', 'encoded', 'created', 'modified')
-    list_filter = ('encoded', 'encoding')
+    list_display = ('title', 'created', 'modified')
     prepopulated_fields = {'slug': ('title',)}
 
     def save_model(self, request, obj, form, change):
         if not change:
             obj.owner = request.user
         obj.save()
-        meta = self.model._meta
-        if not obj.encoded:
-            self.message_user(request, _("Your %s is being encoded. An email notification will be sent when complete.") % force_text(meta.verbose_name))
 
     def re_encode(self, request, queryset):
         for media in queryset:
-            if not media.encoding:
-                media.encode()
+            media.encode()
         meta = self.model._meta
         if len(queryset) == 1:
             message_bit = "%s is" % force_text(meta.verbose_name)
@@ -36,8 +31,6 @@ class MediaAdmin(admin.ModelAdmin):
 
 
 class VideoAdmin(MediaAdmin):
-    list_display = ('title', 'encoding', 'encoded', 'created', 'modified')
-
     class Meta:
         model = Video
 
