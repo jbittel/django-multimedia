@@ -17,13 +17,13 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(bind=True, max_retries=5)
-def encode_media(self, model, media_id, profile_id, tmpdir):
+def encode_media(self, model, media_id, profile_id):
     try:
         media_type = ContentType.objects.get(app_label='multimedia', model=model)
         media = media_type.get_object_for_this_type(pk=media_id)
         profile = EncodeProfile.objects.get(pk=profile_id)
         logger.info("Encoding %s to %s" % (media, profile))
-        encode_path = profile.encode(media, tmpdir)
+        encode_path = profile.encode(media)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc, countdown=5)
     except Exception as exc:
@@ -62,15 +62,12 @@ def upload_media(self, encode_path, model, media_id, profile_id):
 
 
 @shared_task
-def encode_complete(model, media_id, tmpdir):
+def encode_complete(model, media_id):
     media_type = ContentType.objects.get(app_label='multimedia', model=model)
     media = media_type.get_object_for_this_type(pk=media_id)
     media.encoding = False
     media.encoded = True
     media.save()
-
-    # Delete temporary encode directory
-    rmtree(tmpdir)
 
     subject = "Multimedia Uploaded (%s)" % media.title
     message = render_to_string("multimedia/email_notification.txt", {"media": media})

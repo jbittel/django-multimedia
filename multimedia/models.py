@@ -4,7 +4,7 @@ import logging
 import os
 import shlex
 import subprocess
-import tempfile
+from tempfile import mkstemp
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -62,13 +62,13 @@ class EncodeProfile(models.Model):
         args = {'input': input_path, 'output': output_path}
         return shlex.split(self.command % args)
 
-    def encode(self, media, output_dir):
+    def encode(self, media):
         """
-        Encode media into a temporary directory for the current
+        Encode media into a temporary file for the current
         encoding profile.
         """
-        encode_path = os.path.join(output_dir, "%d%d.%s" % (media.id, self.id,
-                                                            self.container))
+        temp_file, encode_path = mkstemp(suffix=".%s" % self.container,
+                                         dir=settings.FILE_UPLOAD_TEMP_DIR)
         command = self.shell_command(media.file.path, encode_path)
         try:
             subprocess.check_call(command, stdin=subprocess.PIPE,
@@ -80,7 +80,6 @@ class EncodeProfile(models.Model):
         except OSError:
             logger.error("Could not find encoding command '%s'" % command[0])
             raise
-
         return encode_path
 
 
@@ -125,7 +124,7 @@ class RemoteStorage(models.Model):
     def upload(self, local_path):
         """
         Upload a local file to remote storage, using the configured
-        storage backend.
+        storage backend. If the upload succeeds, the file is deleted.
         """
         storage_class = getattr(settings, 'MULTIMEDIA_FILE_STORAGE', None)
         if storage_class is None:
@@ -135,10 +134,15 @@ class RemoteStorage(models.Model):
 
         remote_storage = import_by_path(storage_class)()
         try:
+            logger.info("Uploading %s to %s" % (local_path, self.remote_path))
             remote_storage.save(self.remote_path, open(local_path))
         except Exception:
             logger.error("Error saving '%s' to remote storage" % local_path)
             raise
+        try:
+            os.unlink(local_path)
+        except OSError as e:
+            logger.error("Error removing temporary file '%s': %s" % (local_path, e))
 
 
 @python_2_unicode_compatible
@@ -197,12 +201,11 @@ class MediaBase(models.Model):
         if not profiles:
             profiles = list(self.profiles.values_list('pk', flat=True))
 
-        tmpdir = tempfile.mkdtemp()
         group = []
         for profile_id in profiles:
-            group.append(chain(encode_media.s(self.model_name, self.id, profile_id, tmpdir),
+            group.append(chain(encode_media.s(self.model_name, self.id, profile_id),
                                upload_media.s(self.model_name, self.id, profile_id)))
-        chord((group), encode_complete.si(self.model_name, self.id, tmpdir)).apply_async()
+        chord((group), encode_complete.si(self.model_name, self.id)).apply_async()
 
 
 class Video(MediaBase):
