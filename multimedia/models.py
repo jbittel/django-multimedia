@@ -118,21 +118,27 @@ class RemoteStorage(models.Model):
         return os.path.join(self.content_object.model_name, str(self.media_id),
                             self.remote_filename)
 
-    def upload(self, local_path):
+    def get_storage(self):
         """
-        Upload a local file to remote storage, using the configured
-        storage backend. If the upload succeeds, the file is deleted.
+        Return an instance of the currently configured storage class.
+        If ``MULTIMEDIA_FILE_STORAGE`` is not defined or there is an
+        error importing the module, ``ImproperlyConfigured`` is raised.
         """
         storage_class = getattr(settings, 'MULTIMEDIA_FILE_STORAGE', None)
         if storage_class is None:
             error = ('MULTIMEDIA_FILE_STORAGE must be specified in your '
                      'Django settings file')
             raise ImproperlyConfigured(error)
+        return import_by_path(storage_class)()
 
-        remote_storage = import_by_path(storage_class)()
+    def upload(self, local_path):
+        """
+        Upload a local file to remote storage, using the configured
+        storage backend. If the upload succeeds, the file is deleted.
+        """
         try:
             logger.info("Uploading %s to %s" % (local_path, self.remote_path))
-            remote_storage.save(self.remote_path, open(local_path))
+            self.get_storage().save(self.remote_path, open(local_path))
         except Exception:
             logger.error("Error saving '%s' to remote storage" % local_path)
             raise
