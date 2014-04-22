@@ -26,7 +26,7 @@ class MediaAdmin(admin.ModelAdmin):
             message_bit = "%s is" % force_text(meta.verbose_name)
         else:
             message_bit = "%s are" % force_text(meta.verbose_name_plural)
-        self.message_user(request, _("Your %s being encoded. An email notification will be sent when complete.") % message_bit)
+        self.message_user(request, _("Your %s being encoded.") % message_bit)
     re_encode.short_description = ugettext_lazy("Re-encode selected %(verbose_name_plural)s")
 
 

@@ -17,9 +17,6 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
-from celery import chain
-from celery import chord
-
 from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
@@ -200,25 +197,19 @@ class MediaBase(models.Model):
 
     def encode(self, profiles=[]):
         """
-        Encode media with the specified ``EncodeProfile``s using
-        asynchronous Celery tasks. The media is encoded into a
-        temporary directory and then uploaded to the configured media
-        server.
-
-        If ``profiles`` is specified, encode with that list of
+        Encode and upload media using asynchronous Celery tasks. If
+        ``profiles`` are specified, encode with that list of
         ``EncodeProfile`` primary keys; otherwise, encode with all
         associated ``EncodeProfile``s.
         """
-        from .tasks import encode_media, upload_media, encode_complete
+        from .tasks import encode_media, upload_media
 
         if not profiles:
             profiles = list(self.profiles.values_list('pk', flat=True))
 
-        group = []
         for profile_id in profiles:
-            group.append(chain(encode_media.s(self.model_name, self.id, profile_id),
-                               upload_media.s(self.model_name, self.id, profile_id)))
-        chord((group), encode_complete.si(self.model_name, self.id)).apply_async()
+            (encode_media.s(self.model_name, self.id, profile_id) |
+             upload_media.s(self.model_name, self.id, profile_id)).apply_async()
 
 
 class Video(MediaBase):
