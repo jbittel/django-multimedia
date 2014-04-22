@@ -137,6 +137,8 @@ class RemoteStorage(models.Model):
         storage backend. If the upload succeeds, the file is deleted.
         """
         try:
+            if self.exists():
+                self.delete()
             logger.info("Uploading %s to %s" % (local_path, self.remote_path))
             self.get_storage().save(self.remote_path, open(local_path))
         except Exception:
