@@ -147,6 +147,20 @@ class RemoteStorage(models.Model):
         except OSError as e:
             logger.error("Error removing temporary file '%s': %s" % (local_path, e))
 
+    def exists(self):
+        """
+        Return True if the remote file exists, or False otherwise.
+        """
+        return self.get_storage().exists(self.remote_path)
+
+    def delete(self):
+        """
+        Delete the remote file, if it exists.
+        """
+        logger.info("Deleting %s" % self.remote_path)
+        if self.exists():
+            self.get_storage().delete(self.remote_path)
+
 
 class MediaManager(models.Manager):
     def by_container(self, containers):
