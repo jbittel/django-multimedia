@@ -102,6 +102,10 @@ class RemoteStorage(models.Model):
         self.modified = now()
         super(RemoteStorage, self).save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        self.unlink()
+        super(RemoteStorage, self).delete(*args, **kwargs)
+
     @property
     def remote_filename(self):
         """
@@ -141,7 +145,7 @@ class RemoteStorage(models.Model):
         """
         try:
             if self.exists():
-                self.delete()
+                self.unlink()
             logger.info("Uploading %s to %s" % (local_path, self.remote_path))
             self.get_storage().save(self.remote_path, open(local_path))
         except Exception:
@@ -158,7 +162,7 @@ class RemoteStorage(models.Model):
         """
         return self.get_storage().exists(self.remote_path)
 
-    def delete(self):
+    def unlink(self):
         """
         Delete the remote file, if it exists.
         """
