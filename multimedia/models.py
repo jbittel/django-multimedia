@@ -124,12 +124,15 @@ class RemoteStorage(models.Model):
         If ``MULTIMEDIA_FILE_STORAGE`` is not defined or there is an
         error importing the module, ``ImproperlyConfigured`` is raised.
         """
+        if hasattr(self, '_storage'):
+            return self._storage
         storage_class = getattr(settings, 'MULTIMEDIA_FILE_STORAGE', None)
         if storage_class is None:
             error = ('MULTIMEDIA_FILE_STORAGE must be specified in your '
                      'Django settings file')
             raise ImproperlyConfigured(error)
-        return import_by_path(storage_class)()
+        self._storage = import_by_path(storage_class)()
+        return self._storage
 
     def upload(self, local_path):
         """
