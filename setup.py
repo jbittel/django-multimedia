@@ -10,13 +10,12 @@ from multimedia import __version__ as version
 
 packages = [
     'multimedia',
-    'multimedia.conf',
     'multimedia.migrations',
 ]
 
 package_data = {
     '': ['AUTHORS', 'LICENSE', 'README.rst'],
-    'multimedia': ['fixtures/*.json', 'templates/multimedia/*.txt'],
+    'multimedia': ['fixtures/*.json'],
 }
 
 with open('README.rst') as f:
