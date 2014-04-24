@@ -48,11 +48,11 @@ def upload_media(self, encode_path, model, media_id, profile_id):
     except RemoteStorage.DoesNotExist:
         storage = RemoteStorage(content_object=media, profile=profile)
 
-    logger.info("Uploading %s to remote storage" % encode_path)
+    logger.info("Uploading %s to remote storage" % media)
     try:
         storage.upload(encode_path)
         storage.save()
     except Exception as exc:
-        logger.info("Upload failed for %s, retrying" % encode_path)
+        logger.info("Upload failed for %s, retrying" % media)
         raise self.retry(exc=exc, countdown=60)
-    logger.info("Finished uploading %s to remote storage" % encode_path)
+    logger.info("Finished uploading %s to remote storage" % media)
