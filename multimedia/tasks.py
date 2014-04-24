@@ -56,3 +56,19 @@ def upload_media(self, encode_path, model, media_id, profile_id):
         logger.info("Upload failed for %s, retrying" % media)
         raise self.retry(exc=exc, countdown=60)
     logger.info("Finished uploading %s to remote storage" % media)
+
+
+@shared_task(bind=True, max_retries=3)
+def delete_media(self, storage_id):
+    """
+    Delete an encoded file from the configured remote storage.
+    """
+    try:
+        storage = RemoteStorage.objects.get(pk=storage_id)
+    except RemoteStorage.DoesNotExist as exc:
+        raise self.retry(exc=exc, countdown=5)
+
+    logger.info("Deleting %s from remote storage" % storage.remote_path)
+    # Deleting the object first removes the remote media
+    # file, and then deletes the object itself
+    storage.delete()
