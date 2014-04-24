@@ -167,8 +167,10 @@ class RemoteStorage(models.Model):
         Delete the remote file, if it exists.
         """
         logger.info("Deleting %s" % self.remote_path)
-        if self.exists():
+        try:
             self.get_storage().delete(self.remote_path)
+        except IOError:
+            pass
 
 
 class MediaManager(models.Manager):
