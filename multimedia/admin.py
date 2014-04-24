@@ -44,6 +44,12 @@ class EncodeProfileAdmin(admin.ModelAdmin):
     class Meta:
         model = EncodeProfile
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['container']
+        else:
+            return []
+
 
 admin.site.register(Video, VideoAdmin)
 admin.site.register(Audio, AudioAdmin)
