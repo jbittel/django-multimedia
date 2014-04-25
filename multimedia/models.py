@@ -24,17 +24,6 @@ from .utils import import_by_path
 logger = logging.getLogger(__name__)
 
 
-def get_upload_path(instance, filename, absolute=False):
-    """
-    Build a unique path for uploaded media files.
-    """
-    relative_path = 'multimedia/%s/%s' % (instance.slug, filename)
-    if absolute:
-        return os.path.join(settings.MEDIA_ROOT, relative_path)
-    else:
-        return relative_path
-
-
 DEFAULT_FILE_TYPE_CHOICES = (
     ('audio', 'Audio'),
     ('video', 'Video'),
@@ -175,6 +164,11 @@ class RemoteStorage(models.Model):
             pass
 
 
+def media_upload_to(instance, filename):
+    """Return a unique path for uploaded media files."""
+    return 'multimedia/%s/%s' % (instance.slug, filename)
+
+
 class MediaManager(models.Manager):
     def by_container(self, containers):
         """
@@ -211,7 +205,7 @@ class Media(models.Model):
     modified = models.DateTimeField(_('modified'), editable=False)
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
-    file = models.FileField(_('file'), upload_to=get_upload_path)
+    file = models.FileField(_('file'), upload_to=media_upload_to)
 
     objects = MediaManager()
 
