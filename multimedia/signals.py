@@ -2,13 +2,12 @@ from filecmp import cmp
 import os
 
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 
 
 def set_encode_profiles(sender, instance, **kwargs):
     """
     Signal: pre_save
-    Sender: Video, Audio
+    Sender: Media
 
     Prior to saving, store the currently configured encoding profiles
     so we can later detect if the file needs to be encoded. If a new
@@ -51,6 +50,9 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
     Sender: MediaBase.profiles.through
     """
     if action in ['post_add']:
+        if not hasattr(instance, '_profiles'):
+            return
+
         added_profiles = list(kwargs['pk_set'].difference(instance._profiles))
         if added_profiles:
             instance.encode(profiles=added_profiles)
@@ -61,12 +63,9 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
         if removed_profiles:
             from .models import RemoteStorage
             from .tasks import delete_media
-            media_type = ContentType.objects.get(app_label='multimedia',
-                                                 model=instance.model_name)
             for profile_id in removed_profiles:
                 try:
-                    storage = RemoteStorage.objects.get(content_type__pk=media_type.id,
-                                                        media_id=instance.id,
+                    storage = RemoteStorage.objects.get(media=instance,
                                                         profile_id=profile_id)
                 except RemoteStorage.DoesNotExist:
                     pass

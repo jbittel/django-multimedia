@@ -8,8 +8,6 @@ from tempfile import mkstemp
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_save
@@ -37,17 +35,26 @@ def get_upload_path(instance, filename, absolute=False):
         return relative_path
 
 
+DEFAULT_FILE_TYPE_CHOICES = (
+    ('audio', 'Audio'),
+    ('video', 'Video'),
+    ('image', 'Image'),
+)
+
+
 @python_2_unicode_compatible
 class EncodeProfile(models.Model):
-    """
-    Encoding profiles associated with ``MediaBase`` subclasses. Each
-    media instance can have multiple encoding profiles associated
-    with it. When a media instance is encoded, it will be encoded
-    using all associated encoding profiles.
+    """Encoding profiles associated with ``Media``.
+
+    Each ``EncodeProfile`` specifies a command line statement that
+    performs the encoding. Multiple ``EncodeProfile``s may be
+    associated with ``Media`` to output multiple encodings.
     """
     command = models.CharField(_('command'), max_length=1024)
     container = models.CharField(_('container'), max_length=32)
     name = models.CharField(_('name'), max_length=255)
+    file_type = models.CharField(_('type'), max_length=32,
+                                 choices=DEFAULT_FILE_TYPE_CHOICES)
 
     def __str__(self):
         return self.name
@@ -82,16 +89,11 @@ class EncodeProfile(models.Model):
 
 @python_2_unicode_compatible
 class RemoteStorage(models.Model):
-    """
-    Represents a specific encoded file that has been uploaded to the
-    remote server.
-    """
-    content_type = models.ForeignKey(ContentType)
-    media_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'media_id')
+    """An encoded file that has been uploaded to a remote server."""
+    media = models.ForeignKey('Media')
     profile = models.ForeignKey(EncodeProfile)
-    created = models.DateTimeField(_('created'), editable=False)
-    modified = models.DateTimeField(_('modified'), editable=False)
+    created = models.DateTimeField(editable=False)
+    modified = models.DateTimeField(editable=False)
 
     def __str__(self):
         return self.remote_path
@@ -119,7 +121,7 @@ class RemoteStorage(models.Model):
         """
         Return the remote path from the associated media and profile.
         """
-        return os.path.join(self.content_object.model_name, str(self.media_id),
+        return os.path.join(self.profile.file_type, str(self.media_id),
                             self.remote_filename)
 
     def get_storage(self):
@@ -180,7 +182,7 @@ class MediaManager(models.Manager):
         one of the given set of containers. Containers should be
         specified as a list of strings.
         """
-        return self.filter(storage__profile__container__in=containers)
+        return self.filter(remotestorage__profile__container__in=containers)
 
     def by_profile(self, profiles=[]):
         """
@@ -188,14 +190,19 @@ class MediaManager(models.Manager):
         one of the given set of ``EncodeProfile``s. Profiles should be
         specified as a list of ``EncodeProfile`` instances.
         """
-        return self.filter(storage__profile__in=profiles)
+        return self.filter(remotestorage__profile__in=profiles)
+
+    def by_type(self, type=None):
+        """
+        Return a queryset with ``Media`` that has been encoded into
+        the given file type.
+        """
+        return self.filter(remotestorage__profile__file_type=type).distinct()
 
 
 @python_2_unicode_compatible
-class MediaBase(models.Model):
+class Media(models.Model):
     """
-    An abstract base class implementing common fields and methods for
-    individual media type subclasses.
     """
     title = models.CharField(_('title'), max_length=255)
     slug = models.SlugField(_('slug'), max_length=255)
@@ -204,14 +211,14 @@ class MediaBase(models.Model):
     modified = models.DateTimeField(_('modified'), editable=False)
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
-    storage = generic.GenericRelation(RemoteStorage, object_id_field='media_id')
     file = models.FileField(_('file'), upload_to=get_upload_path)
 
     objects = MediaManager()
 
     class Meta:
-        abstract = True
         ordering = ('-created',)
+        verbose_name = 'Media'
+        verbose_name_plural = 'Media'
 
     def __str__(self):
         return self.title
@@ -220,11 +227,7 @@ class MediaBase(models.Model):
         if not self.id:
             self.created = now()
         self.modified = now()
-        super(MediaBase, self).save(*args, **kwargs)
-
-    @property
-    def model_name(self):
-        return self.__class__.__name__.lower()
+        super(Media, self).save(*args, **kwargs)
 
     def encode(self, profiles=[]):
         """
@@ -239,22 +242,9 @@ class MediaBase(models.Model):
             profiles = list(self.profiles.values_list('pk', flat=True))
 
         for profile_id in profiles:
-            (encode_media.s(self.model_name, self.id, profile_id) |
-             upload_media.s(self.model_name, self.id, profile_id)).apply_async()
+            (encode_media.s(self.id, profile_id) |
+             upload_media.s(self.id, profile_id)).apply_async()
 
 
-class Video(MediaBase):
-    class Meta:
-        verbose_name = "Video File"
-        verbose_name_plural = "Video Files"
-
-
-class Audio(MediaBase):
-    class Meta:
-        verbose_name = "Audio File"
-        verbose_name_plural = "Audio Files"
-
-
-pre_save.connect(set_encode_profiles, sender=Video)
-pre_save.connect(set_encode_profiles, sender=Audio)
-m2m_changed.connect(encode_profiles_changed, sender=MediaBase.profiles.through)
+pre_save.connect(set_encode_profiles, sender=Media)
+m2m_changed.connect(encode_profiles_changed, sender=Media.profiles.through)

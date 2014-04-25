@@ -3,8 +3,7 @@ from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from .models import Audio
-from .models import Video
+from .models import Media
 from .models import EncodeProfile
 
 
@@ -12,6 +11,9 @@ class MediaAdmin(admin.ModelAdmin):
     actions = ['re_encode']
     list_display = ('title', 'created', 'modified')
     prepopulated_fields = {'slug': ('title',)}
+
+    class Meta:
+        model = Media
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -30,16 +32,6 @@ class MediaAdmin(admin.ModelAdmin):
     re_encode.short_description = ugettext_lazy("Re-encode selected %(verbose_name_plural)s")
 
 
-class VideoAdmin(MediaAdmin):
-    class Meta:
-        model = Video
-
-
-class AudioAdmin(MediaAdmin):
-    class Meta:
-        model = Audio
-
-
 class EncodeProfileAdmin(admin.ModelAdmin):
     class Meta:
         model = EncodeProfile
@@ -51,6 +43,5 @@ class EncodeProfileAdmin(admin.ModelAdmin):
             return []
 
 
-admin.site.register(Video, VideoAdmin)
-admin.site.register(Audio, AudioAdmin)
+admin.site.register(Media, MediaAdmin)
 admin.site.register(EncodeProfile, EncodeProfileAdmin)

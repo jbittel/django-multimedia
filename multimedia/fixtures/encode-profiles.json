@@ -3,6 +3,7 @@
     "pk": 1, 
     "model": "multimedia.encodeprofile", 
     "fields": {
+        "file_type": "video",
         "container": "mp4", 
         "command": "ffmpeg -y -i \"%(input)s\" -codec:v libx264 -profile:v high -preset slow -crf 20 -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=trunc(oh*a/2)*2:360 -threads 0 -codec:a libfaac -b:a 96k -ac 1 \"%(output)s\"", 
         "name": "H.264"
@@ -12,6 +13,7 @@
     "pk": 2, 
     "model": "multimedia.encodeprofile", 
     "fields": {
+        "file_type": "video",
         "container": "webm", 
         "command": "ffmpeg -y -i \"%(input)s\" -codec:v libvpx -quality good -cpu-used 0 -b:v 500k -qmin 10 -qmax 31 -maxrate 500k -bufsize 1000k -vf scale=-1:360 -threads 0 -codec:a libvorbis -b:a 96k -ac 1 \"%(output)s\"", 
         "name": "WebM"
@@ -21,6 +23,7 @@
     "pk": 3, 
     "model": "multimedia.encodeprofile", 
     "fields": {
+        "file_type": "video",
         "container": "ogv", 
         "command": "ffmpeg -y -i \"%(input)s\" -codec:v libtheora -cpu-used 0 -b:v 800k -qmin 10 -qmax 31 -maxrate 800k -bufsize 1000k -vf scale=-1:360 -codec:a libvorbis -b:a 96k -ac 1 \"%(output)s\"", 
         "name": "Ogg Theora"
@@ -30,6 +33,7 @@
     "pk": 4, 
     "model": "multimedia.encodeprofile", 
     "fields": {
+        "file_type": "audio",
         "container": "mp3", 
         "command": "ffmpeg -y -i \"%(input)s\" -vn \"%(output)s\"", 
         "name": "MP3"
@@ -39,6 +43,7 @@
     "pk": 5, 
     "model": "multimedia.encodeprofile", 
     "fields": {
+        "file_type": "image",
         "container": "jpg",
         "command": "ffmpeg -y -i \"%(input)s\" -ss 10 -frames:v 1 -vf scale=-1:360 \"%(output)s\"",
         "name": "Video Thumbnail"
