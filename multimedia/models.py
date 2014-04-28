@@ -82,7 +82,7 @@ class EncodeProfile(models.Model):
 class RemoteStorage(models.Model):
     """An encoded file that has been uploaded to a remote server."""
     media = models.ForeignKey('Media')
-    profile = models.ForeignKey(EncodeProfile)
+    profile = models.ForeignKey(EncodeProfile, on_delete=models.PROTECT)
     created = models.DateTimeField(editable=False)
     modified = models.DateTimeField(editable=False)
 
