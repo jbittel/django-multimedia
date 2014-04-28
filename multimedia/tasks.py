@@ -15,6 +15,7 @@ logger = get_task_logger(__name__)
 
 @shared_task(bind=True, max_retries=5)
 def encode_media(self, media_id, profile_id):
+    """Encode a media file using a given ``EncodeProfile``."""
     try:
         media = Media.objects.get(pk=media_id)
         profile = EncodeProfile.objects.get(pk=profile_id)
@@ -33,9 +34,7 @@ def encode_media(self, media_id, profile_id):
 
 @shared_task(bind=True, ignore_result=True, max_retries=3)
 def upload_media(self, encode_path, media_id, profile_id):
-    """
-    Upload an encoded media file to the configured remote storage.
-    """
+    """Upload an encoded file to the configured remote storage."""
     try:
         media = Media.objects.get(pk=media_id)
         profile = EncodeProfile.objects.get(pk=profile_id)

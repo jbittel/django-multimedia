@@ -194,8 +194,7 @@ class MediaManager(models.Manager):
 
 @python_2_unicode_compatible
 class Media(models.Model):
-    """
-    """
+    """A media file to be encoded and uploaded to a remote server."""
     title = models.CharField(_('title'), max_length=255)
     slug = models.SlugField(_('slug'), max_length=255)
     description = models.TextField(_('description'), blank=True)
