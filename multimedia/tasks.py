@@ -31,7 +31,7 @@ def encode_media(self, media_id, profile_id):
     return encode_path
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, ignore_result=True, max_retries=3)
 def upload_media(self, encode_path, media_id, profile_id):
     """
     Upload an encoded media file to the configured remote storage.
@@ -56,7 +56,7 @@ def upload_media(self, encode_path, media_id, profile_id):
     logger.info("Finished uploading %s to remote storage" % media)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, ignore_result=True, max_retries=3)
 def delete_media(self, storage_id):
     """
     Delete an encoded file from the configured remote storage.
