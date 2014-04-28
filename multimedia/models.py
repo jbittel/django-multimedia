@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.signals import m2m_changed
+from django.db.models.signals import pre_delete
 from django.db.models.signals import pre_save
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.timezone import now
@@ -18,6 +19,7 @@ from django.utils.translation import ugettext_lazy as _
 from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
+from .signals import delete_remote_media
 from .utils import import_by_path
 
 
@@ -92,10 +94,6 @@ class RemoteStorage(models.Model):
             self.created = now()
         self.modified = now()
         super(RemoteStorage, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self.unlink()
-        super(RemoteStorage, self).delete(*args, **kwargs)
 
     @property
     def remote_filename(self):
@@ -242,3 +240,4 @@ class Media(models.Model):
 
 pre_save.connect(set_encode_profiles, sender=Media)
 m2m_changed.connect(encode_profiles_changed, sender=Media.profiles.through)
+pre_delete.connect(delete_remote_media, sender=RemoteStorage)
