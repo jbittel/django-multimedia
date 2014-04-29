@@ -114,6 +114,9 @@ class RemoteStorage(models.Model):
         with open(path, 'rb') as f:
             return hashlib.sha1(f.read()).hexdigest()
 
+    def get_absolute_url(self, **kwargs):
+        return self.get_storage().url(self.remote_path, **kwargs)
+
     def get_storage(self):
         """
         Return an instance of the currently configured storage class.
