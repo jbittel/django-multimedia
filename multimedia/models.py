@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import hashlib
 import logging
 import os
 import shlex
@@ -19,7 +20,7 @@ from django.utils.translation import ugettext_lazy as _
 from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
-from .signals import delete_remote_media
+from .signals import delete_remote_storage
 from .utils import import_by_path
 
 
@@ -85,6 +86,7 @@ class RemoteStorage(models.Model):
     profile = models.ForeignKey(EncodeProfile, on_delete=models.PROTECT)
     created = models.DateTimeField(editable=False)
     modified = models.DateTimeField(editable=False)
+    content_hash = models.CharField(max_length=64)
 
     def __str__(self):
         return self.remote_path
@@ -95,21 +97,22 @@ class RemoteStorage(models.Model):
         self.modified = now()
         super(RemoteStorage, self).save(*args, **kwargs)
 
-    @property
-    def remote_filename(self):
-        """
-        Return the remote filename from the associated media and profile.
-        """
-        return "%d%d.%s" % (self.media_id, self.profile_id,
-                            self.profile.container)
+    def delete(self, *args, **kwargs):
+        self.unlink()
+        super(RemoteStorage, self).delete(*args, **kwargs)
 
     @property
     def remote_path(self):
-        """
-        Return the remote path from the associated media and profile.
-        """
-        return os.path.join(self.profile.file_type, str(self.media_id),
-                            self.remote_filename)
+        """Build the remote file path from the content hash."""
+        filename = "%s.%s" % (self.content_hash, self.profile.container)
+        return os.path.join(self.content_hash[0:1], self.content_hash[0:2],
+                            filename)
+
+    def generate_content_hash(self, path):
+        """Hash the file's contents."""
+        # TODO read file in chunks to accommodate large files
+        with open(path, 'rb') as f:
+            return hashlib.sha1(f.read()).hexdigest()
 
     def get_storage(self):
         """
@@ -132,34 +135,36 @@ class RemoteStorage(models.Model):
         Upload a local file to remote storage, using the configured
         storage backend. If the upload succeeds, the file is deleted.
         """
-        try:
-            if self.exists():
-                self.unlink()
-            logger.info("Uploading %s to %s" % (local_path, self.remote_path))
-            self.get_storage().save(self.remote_path, open(local_path))
-        except Exception:
-            logger.error("Error saving '%s' to remote storage" % local_path)
-            raise
+        new_hash = self.generate_content_hash(local_path)
+        if new_hash != self.content_hash:
+            self.unlink()
+            self.content_hash = new_hash
+
+        if not self.exists():
+            try:
+                logger.info("Uploading %s to %s" % (local_path, self.remote_path))
+                self.get_storage().save(self.remote_path, open(local_path))
+            except Exception:
+                logger.error("Error saving '%s' to remote storage" % local_path)
+                raise
         try:
             os.unlink(local_path)
         except OSError as e:
-            logger.error("Error removing temporary file '%s': %s" % (local_path, e))
+            logger.error("Error removing file '%s': %s" % (local_path, e))
 
     def exists(self):
-        """
-        Return True if the remote file exists, or False otherwise.
-        """
+        """Return True if the remote file exists, or False otherwise."""
         return self.get_storage().exists(self.remote_path)
 
     def unlink(self):
-        """
-        Delete the remote file, if it exists.
-        """
-        logger.info("Deleting %s" % self.remote_path)
-        try:
-            self.get_storage().delete(self.remote_path)
-        except IOError:
-            pass
+        """Delete the remote file if it is no longer referenced."""
+        refs = RemoteStorage.objects.filter(content_hash=self.content_hash).count()
+        if refs == 1:
+            try:
+                logger.info("Deleting %s" % self.remote_path)
+                self.get_storage().delete(self.remote_path)
+            except IOError:
+                pass
 
 
 def media_upload_to(instance, filename):
@@ -239,4 +244,4 @@ class Media(models.Model):
 
 pre_save.connect(set_encode_profiles, sender=Media)
 m2m_changed.connect(encode_profiles_changed, sender=Media.profiles.through)
-pre_delete.connect(delete_remote_media, sender=RemoteStorage)
+pre_delete.connect(delete_remote_storage, sender=Media)

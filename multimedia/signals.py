@@ -73,14 +73,16 @@ def encode_profiles_changed(sender, instance, action, **kwargs):
                     delete_media.delay(storage.id)
 
 
-def delete_remote_media(sender, instance, **kwargs):
+def delete_remote_storage(sender, instance, **kwargs):
     """Delete media files from remote storage.
 
-    This delete is handed through a pre-delete signal, because when
-    a ``Media`` instance is deleted, the cascade does not call delete
-    methods on related objects, but does fire this signal.
+    Iterate through all associated remotely stored media and
+    trigger a delete. This is handled through a signal so it
+    is fired even when performing bulk deletes.
 
     Signal: pre_delete
-    Sender: RemoteStorage
+    Sender: Media
     """
-    instance.unlink()
+    from .tasks import delete_media
+    for storage in instance.remotestorage_set.all():
+        delete_media.delay(storage.id)
