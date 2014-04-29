@@ -9,6 +9,7 @@ from tempfile import mkstemp
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files import File
 from django.db import models
 from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_delete
@@ -108,11 +109,19 @@ class RemoteStorage(models.Model):
         return os.path.join(self.content_hash[0:1], self.content_hash[0:2],
                             filename)
 
-    def generate_content_hash(self, path):
-        """Hash the file's contents."""
-        # TODO read file in chunks to accommodate large files
+    def generate_content_hash(self, path, chunk_size=None):
+        """Return a SHA1 hash of the file's contents."""
+        if not chunk_size:
+            chunk_size = File.DEFAULT_CHUNK_SIZE
+
+        sha1 = hashlib.sha1()
         with open(path, 'rb') as f:
-            return hashlib.sha1(f.read()).hexdigest()
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                sha1.update(chunk)
+        return sha1.hexdigest()
 
     def get_absolute_url(self, **kwargs):
         return self.get_storage().url(self.remote_path, **kwargs)
