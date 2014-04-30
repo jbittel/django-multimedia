@@ -15,6 +15,7 @@ from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_delete
 from django.db.models.signals import pre_save
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
@@ -213,7 +214,6 @@ class MediaManager(models.Manager):
 class Media(models.Model):
     """A media file to be encoded and uploaded to a remote server."""
     title = models.CharField(_('title'), max_length=255)
-    slug = models.SlugField(_('slug'), max_length=255)
     description = models.TextField(_('description'), blank=True)
     created = models.DateTimeField(_('created'), editable=False)
     modified = models.DateTimeField(_('modified'), editable=False)
@@ -236,6 +236,10 @@ class Media(models.Model):
             self.created = now()
         self.modified = now()
         super(Media, self).save(*args, **kwargs)
+
+    @property
+    def slug(self):
+        return slugify(self.title)
 
     def encode(self, profiles=[]):
         """
