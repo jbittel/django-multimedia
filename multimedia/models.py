@@ -15,7 +15,6 @@ from django.db.models.signals import m2m_changed
 from django.db.models.signals import pre_delete
 from django.db.models.signals import pre_save
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
@@ -180,11 +179,6 @@ class RemoteStorage(models.Model):
                 pass
 
 
-def media_upload_to(instance, filename):
-    """Return a unique path for uploaded media files."""
-    return 'multimedia/%s/%s' % (instance.slug, filename)
-
-
 class MediaManager(models.Manager):
     def by_container(self, containers):
         """
@@ -219,7 +213,7 @@ class Media(models.Model):
     modified = models.DateTimeField(_('modified'), editable=False)
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
-    file = models.FileField(_('file'), upload_to=media_upload_to)
+    file = models.FileField(_('file'), upload_to='multimedia/%Y/%m/%d')
 
     objects = MediaManager()
 
@@ -236,10 +230,6 @@ class Media(models.Model):
             self.created = now()
         self.modified = now()
         super(Media, self).save(*args, **kwargs)
-
-    @property
-    def slug(self):
-        return slugify(self.title)
 
     def encode(self, profiles=[]):
         """
