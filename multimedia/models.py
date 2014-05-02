@@ -28,13 +28,6 @@ from .utils import import_by_path
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_FILE_TYPE_CHOICES = (
-    ('audio', 'Audio'),
-    ('video', 'Video'),
-    ('image', 'Image'),
-)
-
-
 @python_2_unicode_compatible
 class EncodeProfile(models.Model):
     """Encoding profiles associated with ``Media``.
@@ -46,8 +39,6 @@ class EncodeProfile(models.Model):
     command = models.CharField(_('command'), max_length=1024)
     container = models.CharField(_('container'), max_length=32)
     name = models.CharField(_('name'), max_length=255)
-    file_type = models.CharField(_('type'), max_length=32,
-                                 choices=DEFAULT_FILE_TYPE_CHOICES)
 
     def __str__(self):
         return self.name
@@ -195,13 +186,6 @@ class MediaManager(models.Manager):
         specified as a list of ``EncodeProfile`` instances.
         """
         return self.filter(remotestorage__profile__in=profiles)
-
-    def by_type(self, type=None):
-        """
-        Return a queryset with ``Media`` that has been encoded into
-        the given file type.
-        """
-        return self.filter(remotestorage__profile__file_type=type).distinct()
 
 
 @python_2_unicode_compatible
