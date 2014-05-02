@@ -10,6 +10,7 @@ from .models import EncodeProfile
 class MediaAdmin(admin.ModelAdmin):
     actions = ['re_encode']
     list_display = ('title', 'created', 'modified')
+    ordering = ('-created',)
 
     class Meta:
         model = Media

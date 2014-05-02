@@ -218,7 +218,6 @@ class Media(models.Model):
     objects = MediaManager()
 
     class Meta:
-        ordering = ('-created',)
         verbose_name = 'Media'
         verbose_name_plural = 'Media'
 
