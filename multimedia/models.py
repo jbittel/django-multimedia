@@ -179,7 +179,7 @@ class MediaManager(models.Manager):
         """
         return self.filter(remotestorage__profile__container__in=containers).distinct()
 
-    def by_profile(self, profiles=[]):
+    def by_profile(self, profiles):
         """
         Return a queryset with media files that have been encoded into
         one of the given set of ``EncodeProfile``s. Profiles should be
