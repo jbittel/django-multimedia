@@ -177,7 +177,7 @@ class MediaManager(models.Manager):
         one of the given set of containers. Containers should be
         specified as a list of strings.
         """
-        return self.filter(remotestorage__profile__container__in=containers)
+        return self.filter(remotestorage__profile__container__in=containers).distinct()
 
     def by_profile(self, profiles=[]):
         """
@@ -185,7 +185,7 @@ class MediaManager(models.Manager):
         one of the given set of ``EncodeProfile``s. Profiles should be
         specified as a list of ``EncodeProfile`` instances.
         """
-        return self.filter(remotestorage__profile__in=profiles)
+        return self.filter(remotestorage__profile__in=profiles).distinct()
 
 
 @python_2_unicode_compatible
