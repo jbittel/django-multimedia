@@ -57,9 +57,7 @@ def upload_media(self, encode_path, media_id, profile_id):
 
 @shared_task(bind=True, ignore_result=True, max_retries=3)
 def delete_media(self, storage_id):
-    """
-    Delete an encoded file from the configured remote storage.
-    """
+    """Delete an encoded file from the configured remote storage."""
     try:
         storage = RemoteStorage.objects.get(pk=storage_id)
     except RemoteStorage.DoesNotExist as exc:

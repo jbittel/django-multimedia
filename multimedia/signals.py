@@ -5,13 +5,14 @@ from django.conf import settings
 
 
 def set_encode_profiles(sender, instance, **kwargs):
-    """
+    """Store the currently configured encoding profiles.
+
+    This allows changes to the profiles to be detected so it can be
+    determined if the file needs to be encoded. If a new file is being
+    uploaded, force the re-encode.
+
     Signal: pre_save
     Sender: Media
-
-    Prior to saving, store the currently configured encoding profiles
-    so we can later detect if the file needs to be encoded. If a new
-    file is being uploaded, force the re-encode.
     """
     # Store the currently configured encoding profiles
     # so we can compare against them post-save
