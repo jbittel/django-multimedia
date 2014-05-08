@@ -54,6 +54,8 @@ def upload_media(self, encode_path, media_id, profile_id):
         raise self.retry(exc=exc, countdown=60)
     logger.info("Finished uploading %s to remote storage" % media)
 
+    media.set_active()
+
 
 @shared_task(bind=True, ignore_result=True, max_retries=3)
 def delete_media(self, storage_id):

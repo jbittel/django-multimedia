@@ -171,6 +171,13 @@ class RemoteStorage(models.Model):
 
 
 class MediaManager(models.Manager):
+    def active(self):
+        """
+        Return a queryset with media files that have been encoded into
+        all of their initially associated encoding profiles.
+        """
+        return self.filter(active=True)
+
     def by_container(self, containers):
         """
         Return a queryset with media files that have been encoded into
@@ -198,6 +205,7 @@ class Media(models.Model):
     owner = models.ForeignKey(user_model, verbose_name=_('owner'), editable=False)
     profiles = models.ManyToManyField(EncodeProfile)
     file = models.FileField(_('file'), upload_to='multimedia/%Y/%m/%d')
+    active = models.BooleanField(default=False, editable=False)
 
     objects = MediaManager()
 
@@ -229,6 +237,22 @@ class Media(models.Model):
         for profile_id in profiles:
             (encode_media.s(self.id, profile_id) |
              upload_media.s(self.id, profile_id)).apply_async()
+
+    def set_active(self):
+        """
+        Set the media as active when it has been encoded into all of
+        the associated ``EncodeProfile``s. Currently this is a one-time
+        transition to prevent media from dropping in and out of the
+        active set.
+        """
+        if self.active:
+            return True
+        storage_keys = set(self.remotestorage_set.all().values_list('profile', flat=True))
+        profile_keys = set(self.profiles.all().values_list('pk', flat=True))
+        if storage_keys == profile_keys:
+            self.active = True
+            self.save()
+        return self.active
 
 
 pre_save.connect(set_encode_profiles, sender=Media)
