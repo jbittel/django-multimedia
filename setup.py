@@ -47,7 +47,7 @@ setup(
         'Topic :: Multimedia :: Sound/Audio',
         'Topic :: Multimedia :: Sound/Audio :: Conversion',
     ],
-    keywords=['multimedia', 'media', 'audio', 'video', 'encoding'],
+    keywords=['multimedia', 'media', 'audio', 'video', 'encoding', 'conversion'],
     install_requires=[
         'celery>=3.1',
         'django-storages',
