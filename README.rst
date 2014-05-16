@@ -7,7 +7,7 @@ encoding profile you can write a command line statement to accomplish.
 Quick start
 -----------
 
-Install with `pip`::
+Install with `pip`_::
 
    $ pip install django-multimedia
 
