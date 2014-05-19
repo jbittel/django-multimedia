@@ -1,4 +1,6 @@
 include AUTHORS
 include LICENSE
 include README.rst
+recursive-include docs *
 recursive-include multimedia/fixtures *.json
+prune docs/_build
