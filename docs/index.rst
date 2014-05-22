@@ -9,6 +9,8 @@ Introduction
 Encode multimedia from the Django admin interface. Supports any encoding
 profile you can write a command line statement to accomplish.
 
+The source code can be found at `github.com/jbittel/django-mama-cas`_.
+
 Contents
 --------
 
@@ -17,3 +19,5 @@ Contents
 
    installation
    settings
+
+.. _github.com/jbittel/django-multimedia: https://github.com/jbittel/django-multimedia
