@@ -51,7 +51,7 @@ copyright = u'2014, Jason Bittel'
 # built documents.
 #
 # The short X.Y version.
-from mama_cas import __version__ as version
+from multimedia import __version__ as version
 # The full version, including alpha/beta/rc tags.
 release = version
 
