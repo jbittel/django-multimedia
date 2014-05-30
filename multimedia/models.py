@@ -57,6 +57,7 @@ class EncodeProfile(models.Model):
         """
         temp_file, encode_path = mkstemp(suffix=".%s" % self.container,
                                          dir=settings.FILE_UPLOAD_TEMP_DIR)
+        os.close(temp_file)
         command = self.shell_command(media.file.path, encode_path)
         try:
             subprocess.check_call(command, stdin=subprocess.PIPE,
