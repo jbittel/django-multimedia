@@ -1,34 +1,17 @@
-from django.core.exceptions import ImproperlyConfigured
-
-try:
-    from importlib import import_module
-except ImportError:
-    from django.utils.importlib import import_module
-
-
-def import_by_path(dotted_path):
+def import_by_path(path):
     """
-    Import a dotted module path and return the attribute/class
-    designated by the last name in the path. Raise ImproperlyConfigured
-    if something goes wrong.
-
-    Reproduced and slightly modified from the Django 1.6 source for
-    compatibility with older Django versions.
+    Returns a callable from a given dotted path. Raise ImportError
+    if anything goes wrong.
     """
     try:
-        module_path, class_name = dotted_path.rsplit('.', 1)
+       module_path, callable_name = path.rsplit('.', 1)
     except ValueError:
-        msg = "%s doesn't look like a module path" % dotted_path
-        raise ImproperlyConfigured(msg)
+       raise ImportError("%s doesn't look like a callable path" % path)
+
+    module = __import__(module_path, fromlist=[''])
+
     try:
-        module = import_module(module_path)
-    except ImportError as e:
-        msg = "Error importing module %s: %s" % (module_path, e)
-        raise ImproperlyConfigured(msg)
-    try:
-        attr = getattr(module, class_name)
+        return getattr(module, callable_name)
     except AttributeError:
-        msg = "Module %s does not define a '%s' attribute/class" % (
-            module_path, class_name)
-        raise ImproperlyConfigured(msg)
-    return attr
+        raise ImportError("Could not import %s from module %s" %
+                          (callable_name, module_path))
