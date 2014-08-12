@@ -1,8 +1,5 @@
-def import_by_path(path):
-    """
-    Returns a callable from a given dotted path. Raise ImportError
-    if anything goes wrong.
-    """
+def get_callable(path):
+    """Return a callable from a given dotted path."""
     try:
        module_path, callable_name = path.rsplit('.', 1)
     except ValueError:

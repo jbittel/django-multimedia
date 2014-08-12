@@ -22,7 +22,7 @@ from .compat import user_model
 from .signals import set_encode_profiles
 from .signals import encode_profiles_changed
 from .signals import delete_remote_storage
-from .utils import import_by_path
+from .utils import get_callable
 
 
 logger = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class RemoteStorage(models.Model):
             error = ('MULTIMEDIA_FILE_STORAGE must be specified in your '
                      'Django settings file')
             raise ImproperlyConfigured(error)
-        self._storage = import_by_path(storage_class)()
+        self._storage = get_callable(storage_class)()
         return self._storage
 
     def upload(self, local_path):
