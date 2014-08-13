@@ -1,9 +1,9 @@
 def get_callable(path):
     """Return a callable from a given dotted path."""
     try:
-       module_path, callable_name = path.rsplit('.', 1)
+        module_path, callable_name = path.rsplit('.', 1)
     except ValueError:
-       raise ImportError("%s doesn't look like a callable path" % path)
+        raise ImportError("%s doesn't look like a callable path" % path)
 
     module = __import__(module_path, fromlist=[''])
 
