@@ -167,8 +167,9 @@ class RemoteStorage(models.Model):
             try:
                 logger.info("Deleting %s" % self.remote_path)
                 self.get_storage().delete(self.remote_path)
-            except IOError:
-                pass
+            except IOError as e:
+                logger.error("Error removing file '%s': %s" %
+                             (self.remote_path, e))
 
 
 class MediaManager(models.Manager):
