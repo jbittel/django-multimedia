@@ -162,8 +162,8 @@ class RemoteStorage(models.Model):
 
     def unlink(self):
         """Delete the remote file if it is no longer referenced."""
-        refs = RemoteStorage.objects.filter(content_hash=self.content_hash).count()
-        if refs == 1:
+        refs = RemoteStorage.objects.filter(content_hash=self.content_hash)
+        if refs.count() == 1:
             try:
                 logger.info("Deleting %s" % self.remote_path)
                 self.get_storage().delete(self.remote_path)
