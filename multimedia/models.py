@@ -242,19 +242,17 @@ class Media(models.Model):
 
     def set_active(self):
         """
-        Set the media as active when it has been encoded into all of
-        the associated ``EncodeProfile``s. Currently this is a one-time
+        Set the media as active when it has been encoded into all
+        associated ``EncodeProfile``s. Currently this is a one-way
         transition to prevent media from dropping in and out of the
         active set.
         """
-        if self.active:
-            return True
-        storage_keys = set(self.remotestorage_set.all().values_list('profile', flat=True))
-        profile_keys = set(self.profiles.all().values_list('pk', flat=True))
-        if storage_keys == profile_keys:
-            self.active = True
-            self.save()
-        return self.active
+        if not self.active:
+            storage_keys = set(self.remotestorage_set.all().values_list('profile', flat=True))
+            profile_keys = set(self.profiles.all().values_list('pk', flat=True))
+            if storage_keys == profile_keys:
+                self.active = True
+                self.save()
 
 
 pre_save.connect(set_encode_profiles, sender=Media)
