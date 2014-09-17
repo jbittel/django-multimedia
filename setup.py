@@ -10,7 +10,7 @@ from multimedia import __version__ as version
 
 packages = [
     'multimedia',
-    'multimedia.migrations',
+    'multimedia.south_migrations',
 ]
 
 package_data = {
