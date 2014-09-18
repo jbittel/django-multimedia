@@ -2,3 +2,4 @@ pytest-django
 factory-boy
 celery
 django-storages
+django-filer
