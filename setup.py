@@ -1,22 +1,10 @@
 #!/usr/bin/env python
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import find_packages
+from setuptools import setup
 
 from multimedia import __version__ as version
 
-
-packages = [
-    'multimedia',
-    'multimedia.south_migrations',
-]
-
-package_data = {
-    '': ['AUTHORS', 'LICENSE', 'README.rst'],
-    'multimedia': ['fixtures/*.json'],
-}
 
 with open('README.rst') as f:
     readme = f.read()
@@ -24,14 +12,13 @@ with open('README.rst') as f:
 setup(
     name='django-multimedia',
     version=version,
-    url='https://github.com/jbittel/django-multimedia',
-    license='BSD',
     description='Encode and upload multimedia from the Django admin interface',
     long_description=readme,
+    license='BSD',
     author='Jason Bittel',
     author_email='jason.bittel@gmail.com',
-    package_dir={'multimedia': 'multimedia'},
-    packages=packages,
+    url='https://github.com/jbittel/django-multimedia',
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     classifiers=[
