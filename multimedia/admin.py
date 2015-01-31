@@ -8,7 +8,7 @@ from .models import EncodeProfile
 
 
 class MediaAdmin(admin.ModelAdmin):
-    actions = ['re_encode']
+    actions = ['encode']
     list_display = ('title', 'active', 'created', 'modified')
     ordering = ('-created',)
 
@@ -20,7 +20,7 @@ class MediaAdmin(admin.ModelAdmin):
             obj.owner = request.user
         obj.save()
 
-    def re_encode(self, request, queryset):
+    def encode(self, request, queryset):
         for media in queryset:
             media.encode()
         meta = self.model._meta
@@ -29,7 +29,7 @@ class MediaAdmin(admin.ModelAdmin):
         else:
             message_bit = "%s are" % force_text(meta.verbose_name_plural)
         self.message_user(request, _("Your %s being encoded.") % message_bit)
-    re_encode.short_description = ugettext_lazy("Re-encode selected %(verbose_name_plural)s")
+    encode.short_description = ugettext_lazy("Encode selected %(verbose_name_plural)s")
 
 
 class EncodeProfileAdmin(admin.ModelAdmin):
