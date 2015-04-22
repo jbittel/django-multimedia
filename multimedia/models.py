@@ -148,8 +148,8 @@ class RemoteStorage(models.Model):
             try:
                 logger.info("Uploading %s to %s" % (local_path, self.remote_path))
                 self.get_storage().save(self.remote_path, open(local_path))
-            except Exception:
-                logger.error("Error saving '%s' to remote storage" % local_path)
+            except Exception as e:
+                logger.error("Error saving '%s' to remote storage: %s" % (local_path, e))
                 raise
         try:
             os.unlink(local_path)
