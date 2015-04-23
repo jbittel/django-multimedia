@@ -74,7 +74,10 @@ class EncodeProfile(models.Model):
 
 @python_2_unicode_compatible
 class RemoteStorage(models.Model):
-    """An encoded file that has been uploaded to a remote server."""
+    """
+    An encoded file stored on a remote server, uploaded using the
+    configured storage backend.
+    """
     media = models.ForeignKey('Media', blank=True, null=True, on_delete=models.SET_NULL)
     profile = models.ForeignKey(EncodeProfile, on_delete=models.PROTECT)
     created = models.DateTimeField(editable=False)
@@ -119,11 +122,7 @@ class RemoteStorage(models.Model):
         return self.get_storage().url(self.remote_path, **kwargs)
 
     def get_storage(self):
-        """
-        Return an instance of the currently configured storage class.
-        If ``MULTIMEDIA_FILE_STORAGE`` is not defined or there is an
-        error importing the module, ``ImproperlyConfigured`` is raised.
-        """
+        """Return an instance of the currently configured storage class."""
         if hasattr(self, '_storage'):
             return self._storage
         storage_class = getattr(settings, 'MULTIMEDIA_FILE_STORAGE', None)
@@ -136,8 +135,8 @@ class RemoteStorage(models.Model):
 
     def upload(self, local_path):
         """
-        Upload a local file to remote storage, using the configured
-        storage backend. If the upload succeeds, the file is deleted.
+        Upload an encoded file to remote storage and remove the
+        local file.
         """
         new_hash = self.generate_content_hash(local_path)
         if new_hash != self.content_hash:
